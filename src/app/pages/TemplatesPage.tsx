@@ -1,8 +1,10 @@
 import { motion } from "motion/react";
 import { ArrowRight } from "lucide-react";
+import { Link } from "react-router";
 
 const templates = [
   {
+    slug: "sinh-nhat",
     title: "Sinh Nhật Rực Rỡ",
     description: "Kỷ niệm thêm một năm tuổi với niềm vui và confetti rực rỡ. Hoàn hảo để gửi lời chúc tới người thân yêu.",
     image: "https://images.unsplash.com/photo-1513151233558-d860c5398176?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoYXBweSUyMGJpcnRoZGF5JTIwY2VsZWJyYXRpb24lMjBjb25mZXR0aXxlbnwxfHx8fDE3Nzk2MTE4MzJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
@@ -12,6 +14,7 @@ const templates = [
     features: ["Confetti tự động", "Nhạc chúc mừng", "Slideshow ảnh", "Tin nhắn giọng nói"],
   },
   {
+    slug: "lang-man",
     title: "Ký Ức Lãng Mạn",
     description: "Bày tỏ tình yêu qua ảnh, video và những lời nhắn chân thành. Dành cho những kỷ niệm không thể quên.",
     image: "https://images.unsplash.com/photo-1513279922550-250c2129b13a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxyb21hbnRpYyUyMGNvdXBsZSUyMGxvdmUlMjBjZWxlYnJhdGlvbnxlbnwxfHx8fDE3Nzk2MTE4MzJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
@@ -21,6 +24,7 @@ const templates = [
     features: ["Dòng thời gian tình yêu", "Nhạc nền lãng mạn", "Hiệu ứng trái tim", "Hộp thời gian bí mật"],
   },
   {
+    slug: "giang-sinh",
     title: "Giáng Sinh Diệu Kỳ",
     description: "Chia sẻ sự ấm áp và kỳ diệu của mùa lễ hội với gia đình và bạn bè trên toàn thế giới.",
     image: "https://images.unsplash.com/photo-1482517967863-00e15c9b44be?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjaHJpc3RtYXMlMjBob2xpZGF5JTIwZGVjb3JhdGlvbiUyMGZlc3RpdmV8ZW58MXx8fHwxNzc5NjExODMzfDA&ixlib=rb-4.1.0&q=80&w=1080",
@@ -30,6 +34,7 @@ const templates = [
     features: ["Tuyết rơi hoạt ảnh", "Nhạc Giáng Sinh", "Lịch đếm ngược", "Thiệp điện tử"],
   },
   {
+    slug: "tot-nghiep",
     title: "Ngày Tốt Nghiệp",
     description: "Ghi dấu thành tích và những khởi đầu mới đầy hứng khởi cùng những người quan trọng nhất.",
     image: "https://images.unsplash.com/photo-1623461487986-9400110de28e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxncmFkdWF0aW9uJTIwY2VyZW1vbnklMjBjYXAlMjBnb3dufGVufDF8fHx8MTc3OTU0NDExMXww&ixlib=rb-4.1.0&q=80&w=1080",
@@ -39,6 +44,7 @@ const templates = [
     features: ["Hành trình học tập", "Lời nhắn từ thầy cô", "Album kỷ niệm", "Lời chúc tương lai"],
   },
   {
+    slug: "chao-don-be",
     title: "Chào Đón Em Bé",
     description: "Ghi lại những khoảnh khắc đầu tiên quý giá và ký ức cột mốc để bé yêu nhìn lại khi lớn lên.",
     image: "https://images.unsplash.com/photo-1543342384-1f1350e27861?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxuZXdib3JuJTIwYmFieSUyMGZhbWlseSUyMG1vbWVudHxlbnwxfHx8fDE3Nzk2MTE4MzN8MA&ixlib=rb-4.1.0&q=80&w=1080",
@@ -48,6 +54,7 @@ const templates = [
     features: ["Lời nhắn từ gia đình", "Cột mốc tháng tuổi", "Album ảnh đầu đời", "Hộp thời gian 18 năm"],
   },
   {
+    slug: "ky-niem",
     title: "Dòng Thời Gian Kỷ Niệm",
     description: "Sống lại hành trình cùng nhau từng năm một — những kỷ niệm đẹp nhất được kể lại theo thứ tự thời gian.",
     image: "https://images.unsplash.com/photo-1523521803700-b3bcaeab0150?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhbm5pdmVyc2FyeSUyMGNvdXBsZSUyMGNlbGVicmF0aW9uJTIwdG9hc3R8ZW58MXx8fHwxNzc5NjExODM0fDA&ixlib=rb-4.1.0&q=80&w=1080",
@@ -93,7 +100,10 @@ export function TemplatesPage() {
               viewport={{ once: true }}
               transition={{ delay: index * 0.08 }}
               whileHover={{ y: -8 }}
-              className="group overflow-hidden rounded-3xl cursor-pointer"
+            >
+            <Link
+              to={`/templates/${template.slug}`}
+              className="block group overflow-hidden rounded-3xl cursor-pointer"
               style={{
                 background: "white",
                 boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
@@ -146,14 +156,12 @@ export function TemplatesPage() {
                     </span>
                   ))}
                 </div>
-                <button
-                  className="flex items-center gap-2 text-sm font-semibold transition-all group/btn"
-                  style={{ color: template.color }}
-                >
-                  Dùng Mẫu Này
-                  <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-                </button>
+                <div className="flex items-center gap-2 text-sm font-semibold transition-all" style={{ color: template.color }}>
+                  Xem Mẫu Này
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </div>
               </div>
+            </Link>
             </motion.div>
           ))}
         </div>

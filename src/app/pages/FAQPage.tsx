@@ -83,21 +83,8 @@ function FAQItem({ faq }: { faq: { q: string; a: string } }) {
       onClick={() => setOpen(!open)}
     >
       <div className="flex items-center justify-between gap-4 p-5">
-        <span
-          style={{
-            fontWeight: 600,
-            color: "#1A1818",
-            fontSize: "1rem",
-            lineHeight: 1.5,
-          }}
-        >
-          {faq.q}
-        </span>
-        <motion.div
-          animate={{ rotate: open ? 180 : 0 }}
-          transition={{ duration: 0.2 }}
-          className="flex-shrink-0"
-        >
+        <span style={{ fontWeight: 600, color: "#1A1818", fontSize: "1rem", lineHeight: 1.5 }}>{faq.q}</span>
+        <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }} className="flex-shrink-0">
           <ChevronDown className="w-5 h-5" style={{ color: "#E8B4A8" }} />
         </motion.div>
       </div>
@@ -107,10 +94,7 @@ function FAQItem({ faq }: { faq: { q: string; a: string } }) {
         transition={{ duration: 0.25 }}
         style={{ overflow: "hidden" }}
       >
-        <div
-          className="px-5 pb-5"
-          style={{ color: "#6B6B6B", lineHeight: 1.7, fontSize: "0.9375rem" }}
-        >
+        <div className="px-5 pb-5" style={{ color: "#6B6B6B", lineHeight: 1.7, fontSize: "0.9375rem" }}>
           {faq.a}
         </div>
       </motion.div>
@@ -125,11 +109,7 @@ export function FAQPage() {
     <div className="pt-20" style={{ background: "#FAF8F5" }}>
       {/* Hero */}
       <section className="py-20 text-center px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
           <span
             className="inline-block px-4 py-1.5 rounded-full text-sm font-semibold mb-6"
             style={{ background: "rgba(232,180,168,0.2)", color: "#E8B4A8" }}
@@ -138,21 +118,12 @@ export function FAQPage() {
           </span>
           <h1
             className="mb-4"
-            style={{
-              fontSize: "clamp(2.5rem, 5vw, 4rem)",
-              fontWeight: 700,
-              color: "#1A1818",
-              lineHeight: 1.2,
-            }}
+            style={{ fontSize: "clamp(2.5rem, 5vw, 4rem)", fontWeight: 700, color: "#1A1818", lineHeight: 1.2 }}
           >
             Có Câu Hỏi?
           </h1>
-          <p
-            className="max-w-xl mx-auto"
-            style={{ fontSize: "1.125rem", color: "#6B6B6B", lineHeight: 1.6 }}
-          >
-            Chúng tôi có câu trả lời. Tìm kiếm theo danh mục hoặc liên hệ đội
-            ngũ hỗ trợ.
+          <p className="max-w-xl mx-auto" style={{ fontSize: "1.125rem", color: "#6B6B6B", lineHeight: 1.6 }}>
+            Chúng tôi có câu trả lời. Tìm kiếm theo danh mục hoặc liên hệ đội ngũ hỗ trợ.
           </p>
         </motion.div>
       </section>
@@ -167,16 +138,8 @@ export function FAQPage() {
               className="px-4 py-2 rounded-full text-sm font-semibold transition-all"
               style={
                 activeCategory === i
-                  ? {
-                      background:
-                        "linear-gradient(135deg, #E8B4A8 0%, #D4AF78 100%)",
-                      color: "white",
-                    }
-                  : {
-                      background: "white",
-                      color: "#6B6B6B",
-                      border: "1px solid rgba(0,0,0,0.08)",
-                    }
+                  ? { background: "linear-gradient(135deg, #E8B4A8 0%, #D4AF78 100%)", color: "white" }
+                  : { background: "white", color: "#6B6B6B", border: "1px solid rgba(0,0,0,0.08)" }
               }
             >
               {cat.label}
@@ -203,24 +166,17 @@ export function FAQPage() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           className="mt-14 rounded-3xl p-8 text-center"
-          style={{
-            background: "linear-gradient(135deg, #E8B4A8 0%, #D4AF78 100%)",
-          }}
+          style={{ background: "linear-gradient(135deg, #E8B4A8 0%, #D4AF78 100%)" }}
         >
           <MessageCircle className="w-10 h-10 mx-auto mb-3 text-white" />
-          <h3
-            className="mb-2 text-white"
-            style={{ fontSize: "1.5rem", fontWeight: 700 }}
-          >
+          <h3 className="mb-2 text-white" style={{ fontSize: "1.5rem", fontWeight: 700 }}>
             Chưa Tìm Thấy Câu Trả Lời?
           </h3>
           <p className="mb-5 text-white/90" style={{ fontSize: "1rem" }}>
             Đội ngũ hỗ trợ của chúng tôi luôn sẵn sàng giúp đỡ bạn.
           </p>
           <a
-            href="https://www.facebook.com/hieu.kimxuan.7"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="mailto:support@webo.vn"
             className="inline-block px-7 py-3 rounded-full font-semibold text-sm"
             style={{ background: "white", color: "#E8B4A8" }}
           >
