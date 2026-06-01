@@ -149,7 +149,12 @@ export function FAQPage() {
           </h1>
           <p
             className="max-w-xl mx-auto"
-            style={{ fontSize: "1.125rem", color: "#6B6B6B", lineHeight: 1.6 }}
+            style={{
+              fontSize: "1.150rem",
+              color: "#6B6B6B",
+              lineHeight: 1.6,
+              whiteSpace: "nowrap",
+            }}
           >
             Chúng tôi có câu trả lời. Tìm kiếm theo danh mục hoặc liên hệ đội
             ngũ hỗ trợ.
@@ -218,7 +223,7 @@ export function FAQPage() {
             Đội ngũ hỗ trợ của chúng tôi luôn sẵn sàng giúp đỡ bạn.
           </p>
           <a
-            href="mailto:support@webo.vn"
+            href="https://www.facebook.com/hieu.kimxuan.7"
             className="inline-block px-7 py-3 rounded-full font-semibold text-sm"
             style={{ background: "white", color: "#E8B4A8" }}
           >

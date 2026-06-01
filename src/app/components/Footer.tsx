@@ -1,5 +1,8 @@
-import { motion } from "motion/react";
+import { motion } from "framer-motion";
 import { Heart, Instagram, Twitter, Facebook, Youtube } from "lucide-react";
+
+// 🌟 BƯỚC 1: Import file ảnh gấu đã tách nền (.png hoặc .webp) từ thư mục assets
+import bearImg from "../assets/gau.png";
 
 export function Footer() {
   const footerLinks = {
@@ -34,89 +37,80 @@ export function Footer() {
   };
 
   const socialLinks = [
-    { icon: Instagram, href: "#", label: "Instagram" },
-    { icon: Twitter, href: "#", label: "Twitter" },
-    { icon: Facebook, href: "#", label: "Facebook" },
-    { icon: Youtube, href: "#", label: "Youtube" },
+    { icon: Instagram, href: "#", label: "Instagram", color: "#E1306C" },
+    { icon: Twitter, href: "#", label: "Twitter", color: "#1DA1F2" },
+    { icon: Facebook, href: "#", label: "Facebook", color: "#1877F2" },
+    { icon: Youtube, href: "#", label: "Youtube", color: "#FF0000" },
   ];
 
   return (
-    <footer className="relative pt-20 pb-10" style={{ background: "#1A1818" }}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Main footer content */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-6 gap-12 mb-16">
-          {/* Brand column */}
-          <div className="lg:col-span-2">
+    <footer className="relative w-full pt-24 pb-12 bg-gradient-to-b from-transparent via-[#D2B495]/40 to-[#C4A482] border-t border-[#B59471]/40">
+      <div className="absolute -top-[110px] right-[12%] z-20 w-48 md:w-56 select-none pointer-events-none transition-all duration-300">
+        <img
+          src={bearImg}
+          alt="Cute Teddy Bear 3D"
+          className="w-full h-auto object-contain transform translate-y-[19px] drop-shadow-[0_15px_15px_rgba(74,59,43,0.35)] hover:scale-105 hover:translate-y-[8px] transition-all duration-500 ease-out"
+        />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        {/* Main content grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-x-8 gap-y-12 mb-16">
+          {/* Cột Thương hiệu WEMO */}
+          <div className="col-span-2 md:col-span-4 lg:col-span-2">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              {/* Logo */}
-              <div className="flex items-center gap-2 mb-4">
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #E8B4A8 0%, #D4AF78 100%)",
-                  }}
-                >
-                  <Heart className="w-6 h-6 text-white fill-white" />
+              <div className="flex items-center gap-3 mb-5 group cursor-pointer w-fit">
+                <div className="w-11 h-11 rounded-2xl flex items-center justify-center bg-gradient-to-br from-[#E8B4A8] to-[#D4AF78] shadow-md shadow-[#E8B4A8]/30 border border-white">
+                  <Heart className="w-5 h-5 text-white fill-white" />
                 </div>
-                <span
-                  className="font-bold"
-                  style={{
-                    fontSize: "1.5rem",
-                    color: "white",
-                  }}
-                >
+                <span className="font-bold text-2xl tracking-wider text-[#4A3728]">
                   WEMO
                 </span>
               </div>
 
-              <p
-                className="mb-6 max-w-sm"
-                style={{
-                  color: "rgba(255, 255, 255, 0.7)",
-                  lineHeight: 1.6,
-                }}
-              >
+              <p className="text-[#5C4839] text-[0.95rem] leading-relaxed mb-7 max-w-sm font-medium">
                 Biến mỗi món quà thành ký ức số không thể quên. Tạo ra những
                 trải nghiệm cảm xúc tồn tại mãi mãi.
               </p>
 
-              {/* Social links */}
+              {/* Mạng xã hội */}
               <div className="flex gap-3">
                 {socialLinks.map((social, index) => (
                   <motion.a
                     key={index}
                     href={social.href}
-                    whileHover={{ scale: 1.1, y: -2 }}
-                    className="w-10 h-10 rounded-full flex items-center justify-center"
-                    style={{
-                      background: "rgba(255, 255, 255, 0.1)",
-                      color: "rgba(255, 255, 255, 0.7)",
-                      transition: "all 0.3s",
+                    whileHover={{
+                      scale: 1.1,
+                      y: -3,
+                      color: social.color,
+                      backgroundColor: "#ffffff",
+                      boxShadow: "0 8px 16px rgba(74,55,40,0.15)",
                     }}
+                    className="w-10 h-10 rounded-xl bg-white/70 text-[#7A6453] flex items-center justify-center border border-[#B59471]/40 transition-all duration-300 shadow-sm"
                     aria-label={social.label}
                   >
-                    <social.icon className="w-5 h-5" />
+                    <social.icon className="w-[18px] h-[18px]" />
                   </motion.a>
                 ))}
               </div>
             </motion.div>
           </div>
 
-          {/* Links columns */}
+          {/* Các cột danh mục Links */}
           {Object.entries(footerLinks).map(([category, links], colIndex) => (
             <motion.div
               key={category}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: colIndex * 0.1 }}
+              transition={{ delay: colIndex * 0.05 }}
+              className="col-span-1"
             >
-              <h4 className="font-semibold mb-4" style={{ color: "white" }}>
+              <h4 className="text-[#4A3728] font-bold text-[0.88rem] uppercase tracking-wider mb-5 pb-1 border-b border-[#4A3728]/10">
                 {category}
               </h4>
               <ul className="space-y-3">
@@ -124,13 +118,12 @@ export function Footer() {
                   <li key={index}>
                     <a
                       href={link.href}
-                      className="hover:translate-x-1 inline-block transition-transform"
-                      style={{
-                        color: "rgba(255, 255, 255, 0.6)",
-                        fontSize: "0.9375rem",
-                      }}
+                      className="text-[#5C4839] font-medium text-[0.92rem] hover:text-[#ffffff] flex items-center gap-1 group/item transition-colors duration-200"
                     >
-                      {link.name}
+                      <span className="bg-[#ffffff] w-0 h-[1.5px] group-hover/item:w-2 transition-all duration-300 inline-block rounded-full"></span>
+                      <span className="group-hover/item:translate-x-0.5 transition-transform duration-200">
+                        {link.name}
+                      </span>
                     </a>
                   </li>
                 ))}
@@ -140,41 +133,26 @@ export function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          className="pt-8 flex flex-col md:flex-row justify-between items-center gap-4"
-          style={{
-            borderTop: "1px solid rgba(255, 255, 255, 0.1)",
-          }}
-        >
-          <p
-            style={{ color: "rgba(255, 255, 255, 0.5)", fontSize: "0.875rem" }}
-          >
+        <div className="pt-8 border-t border-[#4A3728]/10 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <p className="text-[#5C4839]/80 text-sm text-center sm:text-left font-medium">
             © 2026 WEMO. Bảo lưu mọi quyền. Được tạo với{" "}
-            <Heart
-              className="w-3 h-3 inline fill-current"
-              style={{ color: "#E8B4A8" }}
-            />{" "}
+            <Heart className="w-3.5 h-3.5 inline text-white fill-white mx-0.5 animate-pulse" />{" "}
             cho những kết nối ý nghĩa.
           </p>
+
           <div className="flex gap-6">
             {["Bảo Mật", "Điều Khoản", "Cookie"].map((item, i) => (
               <a
                 key={i}
                 href="#"
-                style={{
-                  color: "rgba(255, 255, 255, 0.5)",
-                  fontSize: "0.875rem",
-                }}
-                className="hover:text-white transition-colors"
+                className="text-[#5C4839]/80 text-sm hover:text-white transition-colors duration-200 relative group font-medium"
               >
                 {item}
+                <span className="absolute left-0 bottom-0 w-0 h-[1px] bg-white group-hover:w-full transition-all duration-300" />
               </a>
             ))}
           </div>
-        </motion.div>
+        </div>
       </div>
     </footer>
   );
