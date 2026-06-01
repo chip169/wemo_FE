@@ -146,10 +146,13 @@ export function HeroSection() {
                 border: "1px solid rgba(255,255,255,0.3)",
               }}
             >
-              <img
-                src="https://images.unsplash.com/photo-1759563871371-eb0ec31824a6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBnaWZ0JTIwYm94JTIwZWxlZ2FudCUyMHBhY2thZ2luZ3xlbnwxfHx8fDE3Nzk2MTE4MzF8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
-                alt="Luxury NFC Gift Box"
+              <video
+                src="https://6a1d3eb50bc623d413b1bf46.imgix.net/wemo/t%E1%BA%A1o_s%E1%BB%B1_chuy%E1%BB%83n_%C4%91%E1%BB%99ng_ko_202606011546.mp4"
                 className="w-full h-auto rounded-3xl"
+                autoPlay
+                loop
+                muted
+                playsInline
               />
             </motion.div>
 
@@ -158,19 +161,19 @@ export function HeroSection() {
               {
                 title: "Sinh Nhật",
                 color: "#FFD4D4",
-                img: "https://images.unsplash.com/photo-1513151233558-d860c5398176?w=400",
+                img: "https://6a1d3eb50bc623d413b1bf46.imgix.net/wemo/t%E1%BA%A1o_h%C3%ACnh_%E1%BA%A3nh_1_s%E1%BA%A3n_202606011509.jpeg?w=2752&h=1536",
                 position: { top: "10%", right: "-10%" },
               },
               {
                 title: "Lãng Mạn",
                 color: "#E8B4A8",
-                img: "https://images.unsplash.com/photo-1513279922550-250c2129b13a?w=400",
+                img: "https://6a1d3eb50bc623d413b1bf46.imgix.net/wemo/t%E1%BA%A1o_h%C3%ACnh_%E1%BA%A3nh_1_s%E1%BA%A3n_202606011509.jpeg?w=2752&h=1536",
                 position: { top: "50%", right: "-15%" },
               },
               {
                 title: "Giáng Sinh",
                 color: "#D4AF78",
-                img: "https://images.unsplash.com/photo-1482517967863-00e15c9b44be?w=400",
+                img: "https://6a1d3eb50bc623d413b1bf46.imgix.net/wemo/t%E1%BA%A1o_h%C3%ACnh_%E1%BA%A3nh_1_s%E1%BA%A3n_202606011509.jpeg?w=2752&h=1536",
                 position: { bottom: "10%", right: "-10%" },
               },
             ].map((card, i) => (
@@ -227,7 +230,7 @@ export function HeroSection() {
               }}
             >
               <img
-                src="https://images.unsplash.com/photo-1509017174183-0b7e0278f1ec?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzbWFydHBob25lJTIwbmZjJTIwcGF5bWVudCUyMGNvbnRhY3RsZXNzfGVufDF8fHx8MTc3OTYxMTgzMXww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
+                src="https://6a1d3eb50bc623d413b1bf46.imgix.net/wemo/t%E1%BA%A1o_h%C3%ACnh_%E1%BA%A3nh_1_s%E1%BA%A3n_202606011509.jpeg?w=2752&h=1536"
                 alt="NFC Scanning"
                 className="w-full h-auto"
               />
