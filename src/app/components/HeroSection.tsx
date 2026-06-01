@@ -2,248 +2,286 @@ import { motion } from "motion/react";
 import { Sparkles } from "lucide-react";
 
 export function HeroSection() {
-  return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Animated gradient background */}
-      <div className="absolute inset-0 webo-animated-gradient" />
+  // Đường dẫn ảnh sản phẩm gốc để bóc tách chi tiết 3D
+  const baseImg =
+    "https://6a1d3eb50bc623d413b1bf46.imgix.net/wemo/t%E1%BA%A1o_h%C3%ACnh_%E1%BA%A3nh_1_s%E1%BA%A3n_202606011509.jpeg";
+  const optimizedImg = `${baseImg}?w=1200&auto=format,compress&q=90`;
 
-      {/* Floating particles */}
+  return (
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#FAF8F6] py-12">
+      {/* Background chuyển động mượt mà */}
+      <div className="absolute inset-0 webo-animated-gradient opacity-40" />
+
+      {/* Hạt tròn/Trái tim nhỏ mờ trôi nền phía sau */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(20)].map((_, i) => (
+        {[...Array(8)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute w-2 h-2 rounded-full"
+            className="absolute rounded-full bg-[#E8B4A8]/30"
             style={{
-              background:
-                i % 3 === 0 ? "#E8B4A8" : i % 3 === 1 ? "#FFD4D4" : "#D4AF78",
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
+              width: i % 2 === 0 ? "6px" : "4px",
+              height: i % 2 === 0 ? "6px" : "4px",
+              left: `${15 + Math.random() * 30}%`,
+              top: `${20 + Math.random() * 60}%`,
             }}
-            animate={{
-              y: [0, -100, -200],
-              x: [0, Math.random() * 100 - 50],
-              opacity: [0, 1, 0],
-              scale: [0, 1.5, 0],
-            }}
+            animate={{ y: [0, -40, 0], opacity: [0.2, 0.6, 0.2] }}
             transition={{
-              duration: 5 + Math.random() * 3,
+              duration: 5 + i,
               repeat: Infinity,
-              delay: Math.random() * 5,
+              ease: "easeInOut",
             }}
           />
         ))}
       </div>
 
-      {/* Main content */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Left side - Text content */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-center lg:text-left"
-          >
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+        <div className="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+          {/* ================= BÊN TRÁI: KHỐI CHỮ VÀ HÌNH 3D Y NHƯ HÌNH ================= */}
+          <div className="lg:col-span-5 text-center lg:text-left z-30 flex flex-col justify-center relative py-12 select-none">
+            {/* --- CÁC PHẦN TỬ 3D ĐỘNG BAO QUANH CHỮ --- */}
+
+            {/* 1. Trái tim nhỏ trên cùng (Gần Badge) */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6"
-              style={{
-                background: "var(--webo-glass-white)",
-                backdropFilter: "blur(10px)",
-                border: "1px solid rgba(255,255,255,0.3)",
-              }}
+              animate={{ y: [0, -4, 0] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute left-[45%] top-0 text-[#E8B4A8] text-xs opacity-80"
             >
-              <Sparkles className="w-4 h-4" style={{ color: "#E8B4A8" }} />
-              <span
-                className="text-sm font-medium"
-                style={{ color: "#1A1818" }}
-              >
-                Tương Lai Của Món Quà Cảm Xúc
-              </span>
+              ❤️
             </motion.div>
 
-            <h1
-              className="mb-6 leading-tight"
-              style={{
-                fontSize: "clamp(2.5rem, 6vw, 4.5rem)",
-                fontWeight: 700,
-                color: "#1A1818",
-              }}
+            {/* 2. Máy ảnh Claymation (Phía trên chữ Biến Mối Món) */}
+            <motion.div
+              animate={{ y: [0, -5, 0], rotate: [0, 5, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute right-24 top-2 w-7 h-7 flex items-center justify-center text-[10px] bg-white/90 rounded-lg shadow-sm border border-orange-100"
             >
-              Biến Mỗi Món Quà Thành{" "}
-              <span
-                className="relative inline-block"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #E8B4A8 0%, #D4AF78 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                }}
-              >
+              📸
+            </motion.div>
+
+            {/* 3. Trái tim hồng nhỏ bên phải chữ Món */}
+            <motion.div
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ duration: 2.5, repeat: Infinity }}
+              className="absolute right-12 top-20 text-xs opacity-70"
+            >
+              💖
+            </motion.div>
+
+            {/* 4. Hình Cặp đôi 3D (Bên phải chữ Quà Thành) */}
+            <motion.div
+              animate={{ y: [0, -6, 0], rotate: [0, 4, 0] }}
+              transition={{
+                duration: 4.2,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 0.2,
+              }}
+              className="absolute right-4 top-36 w-11 h-11 rounded-full overflow-hidden border border-white shadow-md bg-white p-0.5"
+            >
+              <img
+                src={`${baseImg}?w=80&h=80&fit=crop`}
+                alt="3D Couple"
+                className="w-full h-full object-cover rounded-full"
+              />
+            </motion.div>
+
+            {/* 5. Trái tim hồng nhỏ dưới chân cặp đôi */}
+            <motion.div
+              animate={{ x: [0, 3, 0] }}
+              transition={{ duration: 3, repeat: Infinity }}
+              className="absolute right-16 top-[220px] text-[10px] opacity-60"
+            >
+              ❤️
+            </motion.div>
+
+            {/* 6. Bánh kem tầng 3D lớn trung tâm (Ngay cạnh chữ Ký Ức Số) */}
+            <motion.div
+              animate={{ y: [0, 7, 0], scale: [1, 1.03, 1] }}
+              transition={{
+                duration: 3.8,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 0.4,
+              }}
+              className="absolute right-20 top-[260px] w-16 h-16 rounded-full overflow-hidden border-2 border-white/80 shadow-lg bg-[#FAF8F6]"
+            >
+              <img
+                src={`${baseImg}?w=150&h=150&fit=crop`}
+                alt="3D Cake"
+                className="w-full h-full object-cover scale-110"
+              />
+            </motion.div>
+
+            {/* 7. Máy ảnh Retro bên phải bánh kem */}
+            <motion.div
+              animate={{ y: [0, -4, 0] }}
+              transition={{
+                duration: 3.5,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 0.1,
+              }}
+              className="absolute right-4 top-[290px] w-8 h-8 flex items-center justify-center text-xs bg-white rounded-xl shadow-md border border-gray-100"
+            >
+              📸
+            </motion.div>
+
+            {/* 8. Máy ảnh nhỏ bên trái chữ Ký Ức Số */}
+            <motion.div
+              animate={{ rotate: [0, -6, 0], y: [0, 4, 0] }}
+              transition={{
+                duration: 4.5,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+              className="absolute -left-4 top-[295px] w-7 h-7 flex items-center justify-center text-[10px] bg-white/90 rounded-lg shadow-sm border border-orange-500/10"
+            >
+              📸
+            </motion.div>
+
+            {/* 9. Trái tim nhỏ ngoài cùng bên trái */}
+            <motion.div
+              animate={{ scale: [1, 1.15, 1] }}
+              transition={{ duration: 2.8, repeat: Infinity }}
+              className="absolute -left-8 top-[245px] text-xs opacity-70"
+            >
+              ❤️
+            </motion.div>
+
+            {/* --- NỘI DUNG TEXT CHÍNH --- */}
+
+            {/* Badge */}
+            <div className="inline-flex self-center lg:self-start items-center gap-2 px-4 py-2 rounded-full mb-8 bg-white/90 backdrop-blur-md shadow-[0_4px_12px_rgba(0,0,0,0.02)] border border-white">
+              <Sparkles className="w-3.5 h-3.5 text-[#E8B4A8]" />
+              <span className="text-[11px] font-bold tracking-wider text-[#6E6E6E] uppercase">
+                Tương Lai Của Món Quà Cảm Xúc
+              </span>
+            </div>
+
+            {/* Tiêu đề chuẩn hàng, ngắt dòng đúng chuẩn */}
+            <h1
+              className="mb-6 font-extrabold text-[#1A1818] tracking-tight leading-[1.2]"
+              style={{ fontSize: "clamp(2.5rem, 4.8vw, 3.8rem)" }}
+            >
+              Biến Mỗi Món <br />
+              Quà Thành <br />
+              <span className="relative inline-block bg-gradient-to-r from-[#E8B4A8] to-[#D4AF78] bg-clip-text text-transparent pb-1">
                 Ký Ức Số
               </span>
             </h1>
 
-            <p
-              className="mb-8 max-w-2xl mx-auto lg:mx-0"
-              style={{
-                fontSize: "clamp(1rem, 2vw, 1.25rem)",
-                lineHeight: 1.6,
-                color: "#4A4A4A",
-              }}
-            >
-              WEMO sử dụng công nghệ NFC và trải nghiệm web động để tạo ra những
-              món quà cảm xúc cá nhân hóa với ảnh, video, tin nhắn giọng nói và
-              các mẫu tương tác.
+            {/* Mô tả */}
+            <p className="mb-8 text-sm sm:text-base text-[#666666] leading-relaxed max-w-md mx-auto lg:mx-0">
+              WEMO kết hợp công nghệ chạm NFC độc bản và thiệp cá nhân hóa để
+              lưu giữ trọn vẹn những thước phim, hình ảnh và lời chúc chân thành
+              nhất.
             </p>
 
-            {/* Stats */}
-            <div className="mt-12 grid grid-cols-3 gap-6 max-w-lg mx-auto lg:mx-0">
+            {/* Block số liệu dạng phẳng tối giản bên dưới */}
+            <div className="pt-8 border-t border-gray-200/60 grid grid-cols-3 gap-4 max-w-sm mx-auto lg:mx-0 w-full">
               {[
-                { value: "50K+", label: "Ký Ức Được Tạo" },
-                { value: "4.9★", label: "Đánh Giá" },
-                { value: "95%", label: "Hài Lòng" },
+                { value: "50K+", label: "Ký ức số" },
+                { value: "4.9★", label: "Đánh giá" },
+                { value: "95%", label: "Hài lòng" },
               ].map((stat, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 + i * 0.1 }}
-                  className="text-center"
-                >
-                  <div
-                    className="font-bold mb-1"
-                    style={{ fontSize: "1.5rem", color: "#E8B4A8" }}
-                  >
+                <div key={i} className="text-center lg:text-left">
+                  <div className="font-extrabold text-lg sm:text-xl text-[#1A1818] tracking-tight">
                     {stat.value}
                   </div>
-                  <div style={{ fontSize: "0.875rem", color: "#6B6B6B" }}>
+                  <div className="text-[11px] font-medium text-[#8C8C8C] mt-1">
                     {stat.label}
                   </div>
-                </motion.div>
+                </div>
               ))}
             </div>
-          </motion.div>
+          </div>
 
-          {/* Right side - 3D Mockup */}
+          {/* ================= BÊN PHẢI: VIDEO TO NGANG KHÔNG VIỀN + ẢNH PHỤ TRẮNG ================= */}
           <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, scale: 0.97 }}
+            animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="relative"
+            className="lg:col-span-7 relative flex flex-col items-center justify-center w-full"
           >
-            {/* Main gift box mockup */}
-            <motion.div
-              animate={{ y: [0, -20, 0] }}
-              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-              className="relative z-20 rounded-3xl overflow-hidden shadow-2xl webo-glow"
-              style={{
-                background: "var(--webo-glass-white)",
-                backdropFilter: "blur(20px)",
-                border: "1px solid rgba(255,255,255,0.3)",
-              }}
-            >
-              <video
-                src="https://6a1d3eb50bc623d413b1bf46.imgix.net/wemo/t%E1%BA%A1o_s%E1%BB%B1_chuy%E1%BB%83n_%C4%91%E1%BB%99ng_ko_202606011546.mp4"
-                className="w-full h-auto rounded-3xl"
-                autoPlay
-                loop
-                muted
-                playsInline
-              />
-            </motion.div>
+            {/* Khung video góc bo lớn siêu mượt */}
+            <div className="relative w-full max-w-[840px] aspect-[16/10] rounded-[36px] overflow-visible z-20">
+              {/* Thẻ Video chính */}
+              <div className="w-full h-full rounded-[36px] overflow-hidden bg-gray-900 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] relative">
+                <video
+                  src="https://6a1d3eb50bc623d413b1bf46.imgix.net/wemo/t%E1%BA%A1o_s%E1%BB%B1_chuy%E1%BB%83n_%C4%91%E1%BB%99ng_ko_202606011546.mp4"
+                  className="w-full h-full object-cover"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                />
 
-            {/* Floating template cards */}
-            {[
-              {
-                title: "Sinh Nhật",
-                color: "#FFD4D4",
-                img: "https://6a1d3eb50bc623d413b1bf46.imgix.net/wemo/t%E1%BA%A1o_h%C3%ACnh_%E1%BA%A3nh_1_s%E1%BA%A3n_202606011509.jpeg?w=2752&h=1536",
-                position: { top: "10%", right: "-10%" },
-              },
-              {
-                title: "Lãng Mạn",
-                color: "#E8B4A8",
-                img: "https://6a1d3eb50bc623d413b1bf46.imgix.net/wemo/t%E1%BA%A1o_h%C3%ACnh_%E1%BA%A3nh_1_s%E1%BA%A3n_202606011509.jpeg?w=2752&h=1536",
-                position: { top: "50%", right: "-15%" },
-              },
-              {
-                title: "Giáng Sinh",
-                color: "#D4AF78",
-                img: "https://6a1d3eb50bc623d413b1bf46.imgix.net/wemo/t%E1%BA%A1o_h%C3%ACnh_%E1%BA%A3nh_1_s%E1%BA%A3n_202606011509.jpeg?w=2752&h=1536",
-                position: { bottom: "10%", right: "-10%" },
-              },
-            ].map((card, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{
-                  opacity: 1,
-                  scale: 1,
-                  y: [0, -15, 0],
-                }}
-                transition={{
-                  opacity: { delay: 0.5 + i * 0.2 },
-                  y: {
-                    duration: 3 + i,
+                {/* Ngôi sao lấp lánh ở góc dưới video như ảnh thiết kế */}
+                <motion.div
+                  animate={{ scale: [0.8, 1.2, 0.8], opacity: [0.6, 1, 0.6] }}
+                  transition={{
+                    duration: 2,
                     repeat: Infinity,
                     ease: "easeInOut",
-                  },
+                  }}
+                  className="absolute bottom-6 left-8 text-white text-xl drop-shadow-md pointer-events-none"
+                >
+                  WEMO
+                </motion.div>
+              </div>
+
+              {/* THẺ ẢNH PHỤ TRÊN - GIỮ NGUYÊN NỀN VÀ VIỀN TRẮNG */}
+              <motion.div
+                animate={{ y: [0, -8, 0] }}
+                transition={{
+                  duration: 5,
+                  repeat: Infinity,
+                  ease: "easeInOut",
                 }}
-                className="absolute hidden lg:block w-32 h-40 rounded-2xl overflow-hidden shadow-xl"
-                style={{
-                  ...card.position,
-                  background: "var(--webo-glass-white)",
-                  backdropFilter: "blur(20px)",
-                  border: "1px solid rgba(255,255,255,0.3)",
-                }}
+                className="group absolute -top-10 -right-4 hidden xl:flex items-center gap-3 bg-white/95 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-white max-w-[210px] overflow-hidden"
               >
-                <img
-                  src={card.img}
-                  alt={card.title}
-                  className="w-full h-24 object-cover"
-                />
-                <div className="p-2 text-center">
-                  <div
-                    className="text-xs font-semibold"
-                    style={{ color: card.color }}
-                  >
-                    {card.title}
+                <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0">
+                  <img
+                    src={optimizedImg}
+                    alt="Detail"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-115"
+                  />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[10px] text-gray-400 font-medium">
+                    Chi tiết sản phẩm
+                  </span>
+                  <span className="text-xs font-bold text-gray-800 truncate">
+                    Luxury Box Edition
+                  </span>
+                </div>
+              </motion.div>
+
+              {/* SMARTPHONE DƯỚI GÓC PHẢI - GIỮ NGUYÊN BORDER VIỀN TRẮNG DÀY */}
+              <motion.div
+                animate={{ y: [0, 8, 0] }}
+                transition={{
+                  duration: 5,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: 0.5,
+                }}
+                className="group absolute -bottom-8 -right-6 hidden xl:block w-36 aspect-[9/16] rounded-[24px] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.15)] border-[5px] border-white bg-white z-30"
+              >
+                <div className="w-full h-full overflow-hidden relative">
+                  <img
+                    src={optimizedImg}
+                    alt="NFC View"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/5 flex items-center justify-center">
+                    <div className="w-9 h-9 rounded-full border border-white/60 bg-white/20 animate-pulse flex items-center justify-center">
+                      <div className="w-2 h-2 rounded-full bg-white" />
+                    </div>
                   </div>
                 </div>
               </motion.div>
-            ))}
-
-            {/* Smartphone scanning NFC */}
-            <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.8 }}
-              className="absolute -left-10 bottom-10 hidden md:block w-48 h-auto rounded-3xl shadow-2xl overflow-hidden"
-              style={{
-                background: "var(--webo-glass-white)",
-                backdropFilter: "blur(20px)",
-                border: "1px solid rgba(255,255,255,0.3)",
-              }}
-            >
-              <img
-                src="https://6a1d3eb50bc623d413b1bf46.imgix.net/wemo/t%E1%BA%A1o_h%C3%ACnh_%E1%BA%A3nh_1_s%E1%BA%A3n_202606011509.jpeg?w=2752&h=1536"
-                alt="NFC Scanning"
-                className="w-full h-auto"
-              />
-              <motion.div
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full"
-                style={{
-                  background: "rgba(232, 180, 168, 0.3)",
-                  border: "2px solid #E8B4A8",
-                }}
-              />
-            </motion.div>
+            </div>
           </motion.div>
         </div>
       </div>
