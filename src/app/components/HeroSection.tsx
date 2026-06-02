@@ -44,27 +44,26 @@ export function HeroSection() {
             <motion.div
               animate={{ y: [0, -4, 0] }}
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute left-[45%] top-0 text-[#E8B4A8] text-xs opacity-80"
+              className="absolute left-[45%] top-0 text-[#E8B4A8] text-xs opacity-80 w-8 h-8 flex items-center justify-center text-xs  rounded-xl shadow-md"
             >
-              ❤️
+              <img
+                src="https://6a1d3eb50bc623d413b1bf46.imgix.net/wemo/traiTim.png"
+                alt="3D Couple"
+                className="w-full h-full object-cover rounded-full"
+              />
             </motion.div>
 
             {/* 2. Máy ảnh Claymation (Phía trên chữ Biến Mối Món) */}
             <motion.div
               animate={{ y: [0, -5, 0], rotate: [0, 5, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute right-24 top-2 w-7 h-7 flex items-center justify-center text-[10px] bg-white/90 rounded-lg shadow-sm border border-orange-100"
+              className="absolute right-24 top-2 w-7 h-7 flex items-center justify-center text-[10px] rounded-lg shadow-sm"
             >
-              📸
-            </motion.div>
-
-            {/* 3. Trái tim hồng nhỏ bên phải chữ Món */}
-            <motion.div
-              animate={{ scale: [1, 1.1, 1] }}
-              transition={{ duration: 2.5, repeat: Infinity }}
-              className="absolute right-12 top-20 text-xs opacity-70"
-            >
-              💖
+              <img
+                src="https://6a1d3eb50bc623d413b1bf46.imgix.net/wemo/mayAnh.png"
+                alt="3D Couple"
+                className="w-full h-full object-cover rounded-full"
+              />
             </motion.div>
 
             {/* 4. Hình Cặp đôi 3D (Bên phải chữ Quà Thành) */}
@@ -76,7 +75,7 @@ export function HeroSection() {
                 ease: "easeInOut",
                 delay: 0.2,
               }}
-              className="absolute right-4 top-36 w-11 h-11 rounded-full overflow-hidden border border-white shadow-md bg-white p-0.5"
+              className="absolute right-4 top-36 w-11 h-11 rounded-full overflow-hidden shadow-md"
             >
               <img
                 src={`${baseImg}?w=80&h=80&fit=crop`}
@@ -89,9 +88,13 @@ export function HeroSection() {
             <motion.div
               animate={{ x: [0, 3, 0] }}
               transition={{ duration: 3, repeat: Infinity }}
-              className="absolute right-16 top-[220px] text-[10px] opacity-60"
+              className="absolute right-16 top-[220px] text-[10px] opacity-60 w-8 h-8 flex items-center justify-center text-xs  rounded-xl shadow-md"
             >
-              ❤️
+              <img
+                src="https://6a1d3eb50bc623d413b1bf46.imgix.net/wemo/traiTim.png"
+                alt="3D Couple"
+                className="w-full h-full object-cover rounded-full"
+              />
             </motion.div>
 
             {/* 6. Bánh kem tầng 3D lớn trung tâm (Ngay cạnh chữ Ký Ức Số) */}
@@ -103,10 +106,10 @@ export function HeroSection() {
                 ease: "easeInOut",
                 delay: 0.4,
               }}
-              className="absolute right-20 top-[260px] w-16 h-16 rounded-full overflow-hidden border-2 border-white/80 shadow-lg bg-[#FAF8F6]"
+              className="absolute right-20 top-[260px] w-16 h-16 rounded-full overflow-hidden shadow-lg bg-[#FAF8F6]"
             >
               <img
-                src={`${baseImg}?w=150&h=150&fit=crop`}
+                src="https://6a1d3eb50bc623d413b1bf46.imgix.net/wemo/banh.png?w=1073&h=992"
                 alt="3D Cake"
                 className="w-full h-full object-cover scale-110"
               />
@@ -121,31 +124,26 @@ export function HeroSection() {
                 ease: "easeInOut",
                 delay: 0.1,
               }}
-              className="absolute right-4 top-[290px] w-8 h-8 flex items-center justify-center text-xs bg-white rounded-xl shadow-md border border-gray-100"
+              className="absolute right-4 top-[290px] w-8 h-8 flex items-center justify-center text-xs  rounded-xl shadow-md"
             >
-              📸
+              <img
+                src="https://6a1d3eb50bc623d413b1bf46.imgix.net/wemo/mayAnh.png"
+                alt="3D Couple"
+                className="w-full h-full object-cover rounded-full"
+              />
             </motion.div>
 
-            {/* 8. Máy ảnh nhỏ bên trái chữ Ký Ức Số */}
-            <motion.div
-              animate={{ rotate: [0, -6, 0], y: [0, 4, 0] }}
-              transition={{
-                duration: 4.5,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-              className="absolute -left-4 top-[295px] w-7 h-7 flex items-center justify-center text-[10px] bg-white/90 rounded-lg shadow-sm border border-orange-500/10"
-            >
-              📸
-            </motion.div>
-
-            {/* 9. Trái tim nhỏ ngoài cùng bên trái */}
+            {/* 8. Trái tim nhỏ ngoài cùng bên trái */}
             <motion.div
               animate={{ scale: [1, 1.15, 1] }}
               transition={{ duration: 2.8, repeat: Infinity }}
-              className="absolute -left-8 top-[245px] text-xs opacity-70"
+              className="absolute -left-8 top-[245px] w-8 h-8 flex items-center justify-center text-xs  rounded-xl shadow-md "
             >
-              ❤️
+              <img
+                src="https://6a1d3eb50bc623d413b1bf46.imgix.net/wemo/traiTim.png"
+                alt="3D Couple"
+                className="w-full h-full object-cover rounded-full"
+              />
             </motion.div>
 
             {/* --- NỘI DUNG TEXT CHÍNH --- */}
