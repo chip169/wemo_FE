@@ -2,11 +2,11 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://your-backend-api-url.com/api/:path*"
+      "destination": "https://wemo-backend.onrender.com/api/:path*"
     },
     {
       "source": "/uploads/:path*",
-      "destination": "https://your-backend-api-url.com/uploads/:path*"
+      "destination": "https://wemo-backend.onrender.com/uploads/:path*"
     },
     {
       "source": "/((?!api/|uploads/).*)",
