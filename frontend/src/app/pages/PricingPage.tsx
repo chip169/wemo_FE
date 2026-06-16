@@ -1,5 +1,6 @@
 import { motion } from "motion/react";
 import { Check, Sparkles, Crown, Building2, ArrowRight } from "lucide-react";
+import { Link } from "react-router";
 
 const plans = [
   {
@@ -212,7 +213,8 @@ export function PricingPage() {
                   ))}
                 </ul>
 
-                <button
+                <Link
+                  to="/create"
                   className="w-full py-3.5 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 transition-all"
                   style={
                     plan.popular
@@ -226,7 +228,7 @@ export function PricingPage() {
                 >
                   {plan.cta}
                   <ArrowRight className="w-4 h-4" />
-                </button>
+                </Link>
               </div>
             </motion.div>
           ))}

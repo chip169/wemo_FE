@@ -3,11 +3,12 @@ import { Star, Quote } from "lucide-react";
 
 const testimonials = [
   {
-    name: "Sarah & Michael",
+    name: "Kim Xuân Hiếu",
     role: "Quà Kỷ Niệm",
     content:
       "WEMO đã biến kỷ niệm 5 năm của chúng tôi thành điều gì đó thực sự kỳ diệu. Mẫu dòng thời gian với tất cả ảnh và tin nhắn giọng nói khiến vợ tôi rơi nước mắt vì xúc động. Đây không chỉ là món quà—đây là kho báu chúng tôi sẽ giữ mãi mãi.",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
+    avatar:
+      "https://6a1d3eb50bc623d413b1bf46.imgix.net/wemo/z7291398006584_7f6e5ed7608e2d8e2ca06646c3dff042.jpg",
     rating: 5,
   },
   {

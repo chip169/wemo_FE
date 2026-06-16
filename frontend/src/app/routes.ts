@@ -7,11 +7,21 @@ import { TemplateDetailPage } from "./pages/TemplateDetailPage";
 import { PricingPage } from "./pages/PricingPage";
 import { FAQPage } from "./pages/FAQPage";
 import { GiftWizard } from "./pages/GiftWizard";
+import { GiftViewPage } from "./pages/GiftViewPage";
+import { Admin } from "./components/admin/Admin";
 
 export const router = createBrowserRouter([
   {
     path: "create",
     Component: GiftWizard,
+  },
+  {
+    path: "gift/:giftId",
+    Component: GiftViewPage,
+  },
+  {
+    path: "admin",
+    Component: Admin,
   },
   {
     path: "/",
