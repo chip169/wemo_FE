@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { Send, MessageSquare, User } from "lucide-react";
+import { Send, MessageSquare, User, Trash2 } from "lucide-react";
 import { adminFetch } from "../../utils/api";
+import { toast } from "sonner";
 
 interface Session {
   sessionId: string;
@@ -59,6 +60,14 @@ export function SupportChatPage() {
                 return prev;
               }
               return [...prev, msg];
+            });
+          }
+
+          // Show Toast pop-up for user messages
+          if (msg.sender === "user") {
+            toast.message(`Tin nhắn mới từ ${msg.sessionId}`, {
+              description: msg.text,
+              icon: "💬",
             });
           }
 
@@ -139,6 +148,38 @@ export function SupportChatPage() {
       .catch(console.error);
   };
 
+  const handleDeleteSession = (sessionId: string) => {
+    if (window.confirm(`Bạn có chắc chắn muốn xóa toàn bộ cuộc trò chuyện ${sessionId}?`)) {
+      adminFetch(`/api/support/sessions/${sessionId}`, { method: "DELETE" })
+        .then((res) => res.json())
+        .then(() => {
+          setSessions((prev) => prev.filter((s) => s.sessionId !== sessionId));
+          if (activeSession === sessionId) {
+            setActiveSession(null);
+          }
+          toast.success(`Đã xóa cuộc hội thoại ${sessionId}`);
+        })
+        .catch(console.error);
+    }
+  };
+
+  const handleDeleteMessage = (messageId: string) => {
+    if (window.confirm("Bạn có chắc chắn muốn xóa tin nhắn này?")) {
+      adminFetch(`/api/support/messages/${messageId}`, { method: "DELETE" })
+        .then((res) => res.json())
+        .then(() => {
+          setMessages((prev) => prev.filter((m) => m._id !== messageId && m.timestamp !== messageId));
+          // Refresh sessions list
+          adminFetch("/api/support/sessions")
+            .then((res) => res.json())
+            .then((data) => setSessions(data))
+            .catch(console.error);
+          toast.success("Đã xóa tin nhắn");
+        })
+        .catch(console.error);
+    }
+  };
+
   return (
     <div
       className="flex rounded-2xl overflow-hidden bg-white border border-stone-200"
@@ -164,28 +205,51 @@ export function SupportChatPage() {
             sessions.map((session) => {
               const active = activeSession === session.sessionId;
               return (
-                <button
+                <div
                   key={session.sessionId}
-                  onClick={() => setActiveSession(session.sessionId)}
-                  className={`w-full text-left p-4 hover:bg-stone-50 transition-colors flex items-start gap-3 ${active ? "bg-orange-50/40 border-l-4 border-[#E8B4A8] pl-3" : ""}`}
+                  className={`group w-full flex items-center p-4 hover:bg-stone-50 transition-colors gap-3 relative ${active ? "bg-orange-50/40 border-l-4 border-[#E8B4A8] pl-3" : ""}`}
                 >
-                  <div className="w-9 h-9 rounded-full bg-stone-100 flex items-center justify-center text-stone-500 flex-shrink-0">
-                    <User className="w-4 h-4" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-stone-800 truncate">
-                        {session.sessionId}
-                      </span>
-                      <span className="text-[9px] text-stone-400">
-                        {new Date(session.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
+                  <button
+                    onClick={() => setActiveSession(session.sessionId)}
+                    className="flex-1 flex items-start gap-3 text-left min-w-0"
+                  >
+                    <div className="w-9 h-9 rounded-full bg-stone-100 flex items-center justify-center text-stone-500 flex-shrink-0">
+                      <User className="w-4 h-4" />
                     </div>
-                    <p className="text-xs text-stone-500 truncate mt-1">
-                      {session.sender === "admin" ? "Bạn: " : ""}{session.lastMessage}
-                    </p>
-                  </div>
-                </button>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-stone-800 truncate">
+                          {session.sessionId}
+                        </span>
+                        <span className="text-[9px] text-stone-400">
+                          {new Date(session.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-2 mt-1">
+                        <p className="text-xs text-stone-500 truncate flex-1">
+                          {session.sender === "admin" ? "Bạn: " : ""}{session.lastMessage}
+                        </p>
+                        {session.sender === "user" && (
+                          <span className="px-1.5 py-0.5 rounded-full bg-[#E8B4A8] text-white text-[8px] font-black animate-pulse flex-shrink-0">
+                            NEW
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                  
+                  {/* Delete Session Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteSession(session.sessionId);
+                    }}
+                    className="p-1.5 hover:bg-rose-50 text-rose-500 rounded opacity-0 group-hover:opacity-100 transition-opacity ml-1 z-10"
+                    title="Xóa cuộc hội thoại"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               );
             })
           )}
@@ -214,11 +278,11 @@ export function SupportChatPage() {
                 const isAdmin = msg.sender === "admin";
                 return (
                   <div
-                    key={i}
-                    className={`flex ${isAdmin ? "justify-end" : "justify-start"}`}
+                    key={msg._id || i}
+                    className={`flex items-center gap-2 group ${isAdmin ? "justify-end flex-row-reverse" : "justify-start"}`}
                   >
                     <div
-                      className={`max-w-[70%] rounded-2xl px-4 py-2 text-xs leading-relaxed shadow-sm ${
+                      className={`max-w-[70%] rounded-2xl px-4 py-2 text-xs leading-relaxed shadow-sm relative ${
                         isAdmin
                           ? "bg-stone-900 text-white rounded-tr-none"
                           : "bg-white text-stone-800 rounded-tl-none border"
@@ -233,6 +297,15 @@ export function SupportChatPage() {
                         {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
+
+                    {/* Delete Message Button */}
+                    <button
+                      onClick={() => handleDeleteMessage(msg._id || msg.timestamp)}
+                      className="p-1 hover:bg-rose-50 text-rose-500 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Xóa tin nhắn"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 );
               })}
