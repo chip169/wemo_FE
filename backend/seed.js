@@ -132,11 +132,18 @@ const mockMessages = [
 
 const seedJSON = () => {
   console.log("Seeding Local JSON Database...");
+  const { hashPassword } = require("./utils/auth");
   initStorage();
   writeJsonFile("orders.json", mockOrders);
   writeJsonFile("gifts.json", mockGifts);
   writeJsonFile("nfc.json", mockNFC);
   writeJsonFile("messages.json", mockMessages);
+  writeJsonFile("admins.json", [
+    {
+      username: "admin",
+      password: hashPassword("admin123")
+    }
+  ]);
   console.log("Seeding completed successfully for JSON files!");
 };
 
@@ -150,18 +157,26 @@ const seedMongo = async () => {
     const Order = require("./models/Order");
     const NFC = require("./models/NFC");
     const Message = require("./models/Message");
+    const Admin = require("./models/Admin");
+    const { hashPassword } = require("./utils/auth");
 
     // Clean existing tables
     await Gift.deleteMany({});
     await Order.deleteMany({});
     await NFC.deleteMany({});
     await Message.deleteMany({});
+    await Admin.deleteMany({});
 
     // Insert seeds
     await Order.insertMany(mockOrders);
     await Gift.insertMany(mockGifts);
     await NFC.insertMany(mockNFC);
     await Message.insertMany(mockMessages);
+    
+    await Admin.create({
+      username: "admin",
+      password: hashPassword("admin123")
+    });
 
     console.log("Seeding completed successfully for MongoDB!");
     await mongoose.disconnect();

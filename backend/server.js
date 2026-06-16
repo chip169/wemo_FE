@@ -12,6 +12,7 @@ const Gift = require("./models/Gift");
 const Order = require("./models/Order");
 const NFC = require("./models/NFC");
 const Message = require("./models/Message");
+const Admin = require("./models/Admin");
 
 const app = express();
 app.use(cors());
@@ -135,13 +136,27 @@ app.post("/api/auth/login", async (req, res) => {
     return res.status(400).json({ error: "Vui lòng điền đầy đủ thông tin." });
   }
 
-  // Admin login logic
-  if (username === "admin" && password === "admin123") {
-    const token = generateToken({ username, role: "admin" });
-    return res.json({ success: true, token, user: { username, role: "admin" } });
-  }
+  try {
+    let adminUser = null;
+    const hashedPassword = hashPassword(password);
 
-  return res.status(401).json({ error: "Tên đăng nhập hoặc mật khẩu không đúng." });
+    if (getDbMode() === "mongodb") {
+      adminUser = await Admin.findOne({ username, password: hashedPassword });
+    } else {
+      const admins = await readJsonFile("admins.json");
+      adminUser = admins.find((a) => a.username === username && a.password === hashedPassword);
+    }
+
+    if (adminUser) {
+      const token = generateToken({ username: adminUser.username, role: "admin" });
+      return res.json({ success: true, token, user: { username: adminUser.username, role: "admin" } });
+    }
+
+    return res.status(401).json({ error: "Tên đăng nhập hoặc mật khẩu không đúng." });
+  } catch (err) {
+    console.error("Login error:", err);
+    return res.status(500).json({ error: "Lỗi hệ thống khi đăng nhập." });
+  }
 });
 
 app.get("/api/auth/verify", authMiddleware, (req, res) => {
@@ -372,6 +387,48 @@ app.post("/api/orders", authMiddleware, async (req, res) => {
     }
 
     res.status(201).json(newOrder);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put("/api/orders/:id", authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  const { customerName, product, amount, status, paymentStatus } = req.body;
+
+  try {
+    if (getDbMode() === "mongodb") {
+      const order = await Order.findOne({ id });
+      if (!order) {
+        return res.status(404).json({ error: "Không tìm thấy đơn hàng." });
+      }
+
+      if (customerName !== undefined) order.customerName = customerName;
+      if (product !== undefined) order.product = product;
+      if (amount !== undefined) order.amount = Number(amount);
+      if (status !== undefined) order.status = status;
+      if (paymentStatus !== undefined) order.paymentStatus = paymentStatus;
+
+      await order.save();
+      res.json(order);
+    } else {
+      const orders = await readJsonFile("orders.json");
+      const orderIndex = orders.findIndex((o) => o.id === id);
+      if (orderIndex === -1) {
+        return res.status(404).json({ error: "Không tìm thấy đơn hàng." });
+      }
+
+      const order = orders[orderIndex];
+      if (customerName !== undefined) order.customerName = customerName;
+      if (product !== undefined) order.product = product;
+      if (amount !== undefined) order.amount = Number(amount);
+      if (status !== undefined) order.status = status;
+      if (paymentStatus !== undefined) order.paymentStatus = paymentStatus;
+
+      orders[orderIndex] = order;
+      await writeJsonFile("orders.json", orders);
+      res.json(order);
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

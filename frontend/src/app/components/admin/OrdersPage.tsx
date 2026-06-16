@@ -4,6 +4,7 @@ import {
   Search,
   Plus,
   Trash2,
+  Edit2,
   ChevronLeft,
   ChevronRight,
   Sparkles,
@@ -48,6 +49,58 @@ export function OrdersPage() {
   const [formStatus, setFormStatus] = useState<Order["status"]>("pending");
   const [formPayment, setFormPayment] = useState<Order["paymentStatus"]>("unpaid");
   const [submitting, setSubmitting] = useState(false);
+
+  // Edit Form states
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editOrderId, setEditOrderId] = useState("");
+  const [editName, setEditName] = useState("");
+  const [editProduct, setEditProduct] = useState("");
+  const [editAmount, setEditAmount] = useState("");
+  const [editStatus, setEditStatus] = useState<Order["status"]>("pending");
+  const [editPayment, setEditPayment] = useState<Order["paymentStatus"]>("unpaid");
+  const [editSubmitting, setEditSubmitting] = useState(false);
+
+  const handleOpenEditModal = (order: Order) => {
+    setEditOrderId(order.id);
+    setEditName(order.customerName);
+    setEditProduct(order.product);
+    setEditAmount(order.amount.toString());
+    setEditStatus(order.status);
+    setEditPayment(order.paymentStatus);
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdateOrder = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editName.trim() || !editAmount.trim()) return;
+
+    setEditSubmitting(true);
+    const body = {
+      customerName: editName.trim(),
+      product: editProduct,
+      amount: Number(editAmount),
+      status: editStatus,
+      paymentStatus: editPayment,
+    };
+
+    adminFetch(`/api/orders/${editOrderId}`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    })
+      .then((res) => res.json())
+      .then(() => {
+        alert("Cập nhật đơn hàng thành công!");
+        setIsEditModalOpen(false);
+        fetchOrders();
+      })
+      .catch((err) => {
+        console.error(err);
+        alert("Có lỗi xảy ra khi cập nhật đơn hàng.");
+      })
+      .finally(() => {
+        setEditSubmitting(false);
+      });
+  };
 
   const fetchOrders = () => {
     setLoading(true);
@@ -318,13 +371,22 @@ export function OrdersPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <button
-                          onClick={() => handleDelete(order.id)}
-                          className="p-1.5 hover:bg-rose-50 text-rose-500 rounded transition-colors"
-                          title="Xóa đơn hàng"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleOpenEditModal(order)}
+                            className="p-1.5 hover:bg-stone-100 text-stone-600 rounded transition-colors"
+                            title="Chỉnh sửa đơn hàng"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(order.id)}
+                            className="p-1.5 hover:bg-rose-50 text-rose-500 rounded transition-colors"
+                            title="Xóa đơn hàng"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </motion.tr>
                   ))}
@@ -485,6 +547,116 @@ export function OrdersPage() {
                   className="w-full py-3 bg-gradient-to-r from-stone-800 to-stone-950 text-white rounded-xl text-xs font-bold shadow-md hover:opacity-95 transition-opacity disabled:opacity-50 mt-4"
                 >
                   {submitting ? "Đang tạo..." : "Tạo Đơn Hàng"}
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Order Modal */}
+      <AnimatePresence>
+        {isEditModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-3xl p-6 w-full max-w-md relative shadow-2xl border border-stone-100"
+            >
+              <button
+                onClick={() => setIsEditModalOpen(false)}
+                className="absolute top-4 right-4 p-1.5 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+              <h2 className="text-lg font-black text-stone-900 mb-6">Chỉnh Sửa Đơn Hàng ({editOrderId})</h2>
+
+              <form onSubmit={handleUpdateOrder} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-bold text-stone-700 uppercase tracking-wider pl-1">
+                    Tên khách hàng *
+                  </label>
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="Nhập tên khách hàng..."
+                    className="w-full px-4 py-2.5 rounded-xl border border-stone-200 outline-none focus:border-[#E8B4A8] text-xs bg-stone-50"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-bold text-stone-700 uppercase tracking-wider pl-1">
+                    Sản phẩm gói quà *
+                  </label>
+                  <select
+                    value={editProduct}
+                    onChange={(e) => setEditProduct(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-stone-200 outline-none focus:border-[#E8B4A8] text-xs bg-stone-50 text-stone-700 font-medium"
+                  >
+                    <option value="Sinh Nhật Rực Rỡ">Sinh Nhật Rực Rỡ (🎂)</option>
+                    <option value="Ký Ức Lãng Mạn">Ký Ức Lãng Mạn (💖)</option>
+                    <option value="Dòng Thời Gian Kỷ Niệm">Dòng Thời Gian Kỷ Niệm (📸)</option>
+                    <option value="Giáng Sinh Diệu Kỳ">Giáng Sinh Diệu Kỳ (🎄)</option>
+                    <option value="Ngày Tốt Nghiệp">Ngày Tốt Nghiệp (🎓)</option>
+                    <option value="Chào Đón Em Bé">Chào Đón Em Bé (👶)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-bold text-stone-700 uppercase tracking-wider pl-1">
+                    Giá trị đơn hàng (VNĐ) *
+                  </label>
+                  <input
+                    type="number"
+                    value={editAmount}
+                    onChange={(e) => setEditAmount(e.target.value)}
+                    placeholder="Ví dụ: 199000..."
+                    className="w-full px-4 py-2.5 rounded-xl border border-stone-200 outline-none focus:border-[#E8B4A8] text-xs bg-stone-50"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="block text-[10px] font-bold text-stone-700 uppercase tracking-wider pl-1">
+                      Trạng thái đơn
+                    </label>
+                    <select
+                      value={editStatus}
+                      onChange={(e) => setEditStatus(e.target.value as any)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-stone-200 outline-none focus:border-[#E8B4A8] text-xs bg-stone-50 text-stone-700 font-medium"
+                    >
+                      <option value="pending">Chờ xử lý</option>
+                      <option value="processing">Đang xử lý</option>
+                      <option value="completed">Đã hoàn thành</option>
+                      <option value="cancelled">Đã hủy</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-[10px] font-bold text-stone-700 uppercase tracking-wider pl-1">
+                      Thanh toán
+                    </label>
+                    <select
+                      value={editPayment}
+                      onChange={(e) => setEditPayment(e.target.value as any)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-stone-200 outline-none focus:border-[#E8B4A8] text-xs bg-stone-50 text-stone-700 font-medium"
+                    >
+                      <option value="unpaid">Chưa thanh toán</option>
+                      <option value="paid">Đã thanh toán</option>
+                      <option value="refunded">Đã hoàn tiền</option>
+                    </select>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={editSubmitting}
+                  className="w-full py-3 bg-gradient-to-r from-stone-800 to-stone-950 text-white rounded-xl text-xs font-bold shadow-md hover:opacity-95 transition-opacity disabled:opacity-50 mt-4"
+                >
+                  {editSubmitting ? "Đang lưu..." : "Lưu Thay Đổi"}
                 </button>
               </form>
             </motion.div>

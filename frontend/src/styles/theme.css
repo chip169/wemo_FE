@@ -179,3 +179,154 @@
     line-height: 1.5;
   }
 }
+
+/* Custom Marquee and Admin Dark Mode styles */
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: inline-block;
+  white-space: nowrap;
+  animation: marquee 20s linear infinite;
+}
+
+.dark {
+  --background: #121212;
+  --foreground: #f3f4f6;
+  --card: #1e1e1e;
+  --card-foreground: #f3f4f6;
+  --border: #2d2d2d;
+}
+
+/* Custom dark mode overrides for admin interface */
+.dark body {
+  background-color: #121212 !important;
+}
+
+.dark aside,
+.dark header,
+.dark .bg-white,
+.dark div[style*="background: white"],
+.dark div[style*="background: rgb(255, 255, 255)"],
+.dark div[style*="backgroundColor: white"] {
+  background-color: #1e1e1e !important;
+  background: #1e1e1e !important;
+  border-color: #2d2d2d !important;
+}
+
+.dark div[style*="border: 1px solid #E5E7EB"],
+.dark div[style*="border: 1px solid rgb(229, 231, 235)"],
+.dark .border-stone-200,
+.dark .border-stone-100 {
+  border-color: #2d2d2d !important;
+}
+
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: #2a2a2a !important;
+  color: #ffffff !important;
+  border-color: #3d3d3d !important;
+}
+
+.dark input::placeholder {
+  color: #6b7280 !important;
+}
+
+.dark table {
+  background-color: #1e1e1e !important;
+  border-color: #2d2d2d !important;
+}
+
+.dark thead,
+.dark thead[style*="background: #F9FAFB"],
+.dark thead[style*="background: rgb(249, 250, 251)"] {
+  background-color: #262626 !important;
+  background: #262626 !important;
+  border-bottom-color: #333333 !important;
+}
+
+.dark th {
+  color: #9ca3af !important;
+}
+
+.dark tr {
+  border-bottom-color: #2d2d2d !important;
+}
+
+.dark tr:hover {
+  background-color: #262626 !important;
+}
+
+.dark td {
+  color: #e5e7eb !important;
+}
+
+.dark span[style*="color: #111827"],
+.dark span[style*="color: rgb(17, 24, 39)"],
+.dark td span[style*="color: #111827"] {
+  color: #f3f4f6 !important;
+}
+
+.dark h1, .dark h2, .dark h3, .dark h4, .dark p {
+  color: #f3f4f6 !important;
+}
+
+.dark h1[style*="color: #111827"],
+.dark h2[style*="color: #111827"],
+.dark h3[style*="color: #111827"],
+.dark h4[style*="color: #111827"],
+.dark h1[style*="color: rgb(17, 24, 39)"] {
+  color: #f3f4f6 !important;
+}
+
+.dark p[style*="color: #6B7280"] {
+  color: #9ca3af !important;
+}
+
+.dark .text-stone-900 {
+  color: #f3f4f6 !important;
+}
+
+.dark .text-stone-800 {
+  color: #e5e7eb !important;
+}
+
+.dark .text-stone-700 {
+  color: #d1d5db !important;
+}
+
+.dark .text-stone-600 {
+  color: #9ca3af !important;
+}
+
+.dark .text-stone-500 {
+  color: #9ca3af !important;
+}
+
+.dark .bg-stone-50 {
+  background-color: #262626 !important;
+}
+
+.dark .bg-stone-100 {
+  background-color: #2d2d2d !important;
+}
+
+.dark nav button {
+  color: #9ca3af !important;
+}
+
+.dark nav button:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.dark nav button[style*="rgba(232, 180, 168, 0.1)"] {
+  background-color: rgba(232, 180, 168, 0.15) !important;
+  color: #e8b4a8 !important;
+}
+
+.dark div[style*="background: white"] button:hover {
+  background-color: #262626 !important;
+}

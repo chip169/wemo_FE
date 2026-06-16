@@ -1,4 +1,4 @@
-import { useState, ReactNode } from "react";
+import { useState, ReactNode, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   LayoutDashboard,
@@ -45,15 +45,90 @@ export function DashboardLayout({
   onPageChange,
 }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem("wemo_admin_theme");
+    return saved === "dark";
+  });
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [unreadSessions, setUnreadSessions] = useState<any[]>([]);
 
-  const notifications = [
-    { id: 1, title: "Đơn hàng mới đã nhận", time: "5 phút trước", unread: true },
-    { id: 2, title: "Quà tặng #1234 đã mở", time: "1 giờ trước", unread: true },
-    { id: 3, title: "Đã nhận thanh toán", time: "2 giờ trước", unread: false },
-  ];
+  // Synchronize document dark mode class
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("wemo_admin_theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("wemo_admin_theme", "light");
+    }
+  }, [darkMode]);
+
+  // Connect to support chat to check for unread user messages
+  useEffect(() => {
+    const fetchUnreadSessions = () => {
+      const token = localStorage.getItem("wemo_admin_token");
+      fetch("/api/support/sessions", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (Array.isArray(data)) {
+            const unread = data.filter((s) => s.sender === "user");
+            setUnreadSessions(unread);
+          }
+        })
+        .catch(console.error);
+    };
+
+    fetchUnreadSessions();
+
+    const eventSource = new EventSource("/api/support/stream?isAdmin=true");
+
+    eventSource.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        if (msg && msg.type !== "connected") {
+          if (msg.sender === "user") {
+            setUnreadSessions((prev) => {
+              if (!prev.some((s) => s.sessionId === msg.sessionId)) {
+                return [...prev, { sessionId: msg.sessionId, lastMessage: msg.text }];
+              }
+              return prev.map((s) => 
+                s.sessionId === msg.sessionId ? { ...s, lastMessage: msg.text } : s
+              );
+            });
+          } else if (msg.sender === "admin") {
+            setUnreadSessions((prev) => prev.filter((s) => s.sessionId !== msg.sessionId));
+          }
+        }
+      } catch (err) {
+        console.error("Layout SSE parsing error:", err);
+      }
+    };
+
+    eventSource.onerror = () => {
+      eventSource.close();
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, [activePage]);
+
+  // Convert unread sessions into notifications list
+  const notifications = unreadSessions.map((s) => ({
+    id: s.sessionId,
+    title: `Khách hàng [${s.sessionId}] nhắn tin`,
+    message: s.lastMessage,
+    unread: true,
+    action: () => {
+      onPageChange("support");
+      setNotificationsOpen(false);
+    }
+  }));
 
   return (
     <div className="min-h-screen" style={{ background: "#F9FAFB" }}>
@@ -135,37 +210,6 @@ export function DashboardLayout({
               </button>
             );
           })}
-
-          {/* Back to Website */}
-          <button
-            onClick={() => {
-              window.location.hash = "";
-              window.location.reload();
-            }}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 mt-4"
-            style={{
-              background: "transparent",
-              color: "#6B7280",
-              fontWeight: 500,
-              borderTop: "1px solid #E5E7EB",
-              paddingTop: "16px",
-            }}
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10 19l-7-7m0 0l7-7m-7 7h18"
-              />
-            </svg>
-            <span>Quay lại Trang chủ</span>
-          </button>
         </nav>
 
         {/* User section */}
@@ -258,30 +302,29 @@ export function DashboardLayout({
               <Menu className="w-5 h-5" />
             </button>
 
-            {/* Search */}
-            <div className="relative hidden md:block">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
-                style={{ color: "#9CA3AF" }}
-              />
-              <input
-                type="text"
-                placeholder="Tìm kiếm..."
-                className="w-80 pl-10 pr-4 py-2 rounded-xl outline-none transition-all"
-                style={{
-                  background: "#F3F4F6",
-                  border: "1px solid transparent",
-                  color: "#111827",
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = "#E8B4A8";
-                  e.target.style.background = "white";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "transparent";
-                  e.target.style.background = "#F3F4F6";
-                }}
-              />
+            {/* Scrolling notification text replacing Search */}
+            <div 
+              className="hidden md:flex items-center overflow-hidden w-[400px] h-9 bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 rounded-xl px-4 text-xs font-semibold"
+              style={{ maxWidth: "400px" }}
+            >
+              {unreadSessions.length > 0 ? (
+                <div className="relative w-full overflow-hidden flex items-center">
+                  <div className="animate-marquee text-amber-800 dark:text-amber-200 font-bold flex items-center gap-2">
+                    <span className="inline-flex w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
+                    <span>🔔 Có {unreadSessions.length} khách nhắn tin chưa trả lời:</span>
+                    {unreadSessions.map((s, idx) => (
+                      <span key={s.sessionId} className="ml-3">
+                        [{s.sessionId}]: "{s.lastMessage}"{idx < unreadSessions.length - 1 ? " |" : ""}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-stone-500 dark:text-stone-400 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  Hệ thống hoạt động bình thường | Không có tin nhắn chưa đọc
+                </div>
+              )}
             </div>
           </div>
 
@@ -306,10 +349,13 @@ export function DashboardLayout({
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative"
               >
                 <Bell className="w-5 h-5 text-gray-600" />
-                <div
-                  className="absolute top-1 right-1 w-2 h-2 rounded-full"
-                  style={{ background: "#EF4444" }}
-                />
+                {notifications.length > 0 && (
+                  <div
+                    className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center animate-bounce"
+                  >
+                    {notifications.length}
+                  </div>
+                )}
               </button>
 
               {/* Notifications dropdown */}
@@ -336,50 +382,53 @@ export function DashboardLayout({
                           color: "#111827",
                         }}
                       >
-                        Thông báo
+                        Thông báo tin nhắn chưa đọc
                       </div>
                     </div>
                     <div className="max-h-96 overflow-y-auto">
-                      {notifications.map((notif) => (
-                        <div
-                          key={notif.id}
-                          className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
-                          style={{
-                            borderBottom: "1px solid #F3F4F6",
-                            background: notif.unread
-                              ? "rgba(232, 180, 168, 0.05)"
-                              : "transparent",
-                          }}
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex-1">
-                              <div
-                                style={{
-                                  fontSize: "0.875rem",
-                                  color: "#111827",
-                                }}
-                              >
-                                {notif.title}
-                              </div>
-                              <div
-                                style={{
-                                  fontSize: "0.75rem",
-                                  color: "#6B7280",
-                                  marginTop: "4px",
-                                }}
-                              >
-                                {notif.time}
-                              </div>
-                            </div>
-                            {notif.unread && (
-                              <div
-                                className="w-2 h-2 rounded-full mt-1"
-                                style={{ background: "#E8B4A8" }}
-                              />
-                            )}
-                          </div>
+                      {notifications.length === 0 ? (
+                        <div className="p-6 text-center text-xs text-stone-400 font-bold">
+                          Không có tin nhắn chưa đọc nào.
                         </div>
-                      ))}
+                      ) : (
+                        notifications.map((notif) => (
+                          <div
+                            key={notif.id}
+                            onClick={notif.action}
+                            className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                            style={{
+                              borderBottom: "1px solid #F3F4F6",
+                              background: "rgba(232, 180, 168, 0.05)",
+                            }}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex-1">
+                                <div
+                                  style={{
+                                    fontSize: "0.875rem",
+                                    color: "#111827",
+                                  }}
+                                >
+                                  {notif.title}
+                                </div>
+                                <div
+                                  style={{
+                                    fontSize: "0.75rem",
+                                    color: "#6B7280",
+                                    marginTop: "4px",
+                                    fontWeight: 500,
+                                  }}
+                                >
+                                  {notif.message}
+                                </div>
+                              </div>
+                              <div
+                                className="w-2 h-2 rounded-full mt-1 bg-[#E8B4A8]"
+                              />
+                            </div>
+                          </div>
+                        ))
+                      )}
                     </div>
                   </motion.div>
                 )}
