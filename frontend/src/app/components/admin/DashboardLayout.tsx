@@ -301,31 +301,31 @@ export function DashboardLayout({
             >
               <Menu className="w-5 h-5" />
             </button>
+          </div>
 
-            {/* Scrolling notification text replacing Search */}
-            <div 
-              className="hidden md:flex items-center overflow-hidden w-[400px] h-9 bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 rounded-xl px-4 text-xs font-semibold"
-              style={{ maxWidth: "400px" }}
-            >
-              {unreadSessions.length > 0 ? (
-                <div className="relative w-full overflow-hidden flex items-center">
-                  <div className="animate-marquee text-amber-800 dark:text-amber-200 font-bold flex items-center gap-2">
-                    <span className="inline-flex w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
-                    <span>🔔 Có {unreadSessions.length} khách nhắn tin chưa trả lời:</span>
-                    {unreadSessions.map((s, idx) => (
-                      <span key={s.sessionId} className="ml-3">
-                        [{s.sessionId}]: "{s.lastMessage}"{idx < unreadSessions.length - 1 ? " |" : ""}
-                      </span>
-                    ))}
-                  </div>
+          {/* Scrolling notification text replacing Search */}
+          <div 
+            className="hidden md:flex items-center overflow-hidden w-[600px] h-9 bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 rounded-xl px-4 text-xs font-semibold mx-auto justify-center"
+            style={{ maxWidth: "600px" }}
+          >
+            {unreadSessions.length > 0 ? (
+              <div className="relative w-full overflow-hidden flex items-center">
+                <div className="animate-marquee text-amber-800 dark:text-amber-200 font-bold flex items-center gap-2">
+                  <span className="inline-flex w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
+                  <span>🔔 Có {unreadSessions.length} khách nhắn tin chưa trả lời:</span>
+                  {unreadSessions.map((s, idx) => (
+                    <span key={s.sessionId} className="ml-3">
+                      [{s.sessionId}]: "{s.lastMessage}"{idx < unreadSessions.length - 1 ? " |" : ""}
+                    </span>
+                  ))}
                 </div>
-              ) : (
-                <div className="text-stone-500 dark:text-stone-400 flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  Hệ thống hoạt động bình thường | Không có tin nhắn chưa đọc
-                </div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="text-stone-500 dark:text-stone-400 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                Hệ thống hoạt động bình thường | Không có tin nhắn chưa đọc
+              </div>
+            )}
           </div>
 
           {/* Right side */}
