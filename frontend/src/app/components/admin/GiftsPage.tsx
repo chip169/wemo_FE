@@ -20,7 +20,8 @@ interface Gift {
 }
 
 const statusColors = {
-  published: { bg: "#DBEAFE", text: "#2563EB", label: "Đã phát hành" },
+  published: { bg: "#DCFCE7", text: "#16A34A", label: "Đã tạo thiệp" },
+  uncreated: { bg: "#FEF3C7", text: "#D97706", label: "Chưa tạo thiệp" },
 };
 
 export function GiftsPage() {
@@ -31,10 +32,33 @@ export function GiftsPage() {
 
   const fetchGifts = () => {
     setLoading(true);
-    adminFetch("/api/gifts")
-      .then((res) => res.json())
-      .then((data) => {
-        setGifts(data);
+    Promise.all([
+      adminFetch("/api/gifts").then((res) => (res.ok ? res.json() : [])).catch(() => []),
+      adminFetch("/api/orders").then((res) => (res.ok ? res.json() : [])).catch(() => []),
+    ])
+      .then(([giftsData, ordersData]) => {
+        const giftsList = Array.isArray(giftsData) ? giftsData : [];
+        const ordersList = Array.isArray(ordersData) ? ordersData : [];
+
+        // Build map of orderIds that have created gifts
+        const createdOrderIds = new Set(giftsList.map((g: any) => g.orderId).filter(Boolean));
+
+        // Filter orders that don't have created gifts yet
+        const uncreatedGifts = ordersList
+          .filter((o: any) => o && o.id && !createdOrderIds.has(o.id))
+          .map((o: any) => ({
+            id: "-", 
+            recipientName: `Chưa có (Đơn hàng: ${o.customerName || "Chưa rõ"})`,
+            templateId: "-",
+            orderId: o.id,
+            views: 0,
+            createdAt: o.createdDate || "",
+            isPlaceholder: true,
+          }));
+
+        // Combine both
+        const combined = [...giftsList, ...uncreatedGifts];
+        setGifts(combined);
         setLoading(false);
       })
       .catch((err) => {
@@ -60,10 +84,13 @@ export function GiftsPage() {
   };
 
   const filteredGifts = gifts.filter((gift) => {
+    const recipient = gift.recipientName || "";
+    const orderId = gift.orderId || "";
+    const giftId = gift.id || "";
     return (
-      gift.recipientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      gift.orderId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      gift.id.toLowerCase().includes(searchQuery.toLowerCase())
+      recipient.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      orderId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      giftId.toLowerCase().includes(searchQuery.toLowerCase())
     );
   });
 
@@ -228,16 +255,16 @@ export function GiftsPage() {
                         <span
                           className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold"
                           style={{
-                            background: statusColors.published.bg,
-                            color: statusColors.published.text,
+                            background: gift.isPlaceholder ? statusColors.uncreated.bg : statusColors.published.bg,
+                            color: gift.isPlaceholder ? statusColors.uncreated.text : statusColors.published.text,
                           }}
                         >
-                          {statusColors.published.label}
+                          {gift.isPlaceholder ? statusColors.uncreated.label : statusColors.published.label}
                         </span>
                       </td>
                       <td className="px-6 py-4">
                         <span className="text-xs text-stone-500">
-                          {new Date(gift.createdAt).toLocaleDateString()}
+                          {gift.createdAt ? new Date(gift.createdAt).toLocaleDateString() : "-"}
                         </span>
                       </td>
                       <td className="px-6 py-4">
@@ -246,24 +273,28 @@ export function GiftsPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <a
-                            href={`/gift/${gift.id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-1.5 hover:bg-stone-100 rounded text-stone-600 transition-colors"
-                            title="Xem chi tiết"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </a>
-                          <button
-                            onClick={() => handleDelete(gift.id)}
-                            className="p-1.5 hover:bg-rose-50 text-rose-500 rounded transition-colors"
-                            title="Xóa"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                        {!gift.isPlaceholder ? (
+                          <div className="flex items-center gap-2">
+                            <a
+                              href={`/gift/${gift.id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-1.5 hover:bg-stone-100 rounded text-stone-600 transition-colors"
+                              title="Xem chi tiết"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </a>
+                            <button
+                              onClick={() => handleDelete(gift.id)}
+                              className="p-1.5 hover:bg-rose-50 text-rose-500 rounded transition-colors"
+                              title="Xóa"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-stone-400 font-semibold italic">Chờ khách thiết kế</span>
+                        )}
                       </td>
                     </motion.tr>
                   ))}

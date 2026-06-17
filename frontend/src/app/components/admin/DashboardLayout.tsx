@@ -131,7 +131,7 @@ export function DashboardLayout({
   }));
 
   return (
-    <div className="min-h-screen" style={{ background: "#F9FAFB" }}>
+    <div className="min-h-screen" style={{ background: darkMode ? "#09090b" : "#F9FAFB" }}>
       {/* Mobile sidebar backdrop */}
       <AnimatePresence>
         {sidebarOpen && (

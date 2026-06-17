@@ -627,19 +627,21 @@ app.post("/api/support/messages", async (req, res) => {
       timestamp: new Date().toISOString(),
     };
 
+    let savedMsg = newMsg;
     if (getDbMode() === "mongodb") {
       const msgDoc = new Message(newMsg);
       await msgDoc.save();
+      savedMsg = msgDoc.toObject(); // Convert to standard object including _id
     } else {
       const messages = await readJsonFile("messages.json");
       messages.push(newMsg);
       await writeJsonFile("messages.json", messages);
     }
 
-    // Push real-time updates via Server-Sent Events (SSE)
-    broadcastMessage(newMsg);
+    // Push real-time updates via Server-Sent Events (SSE) with database IDs
+    broadcastMessage(savedMsg);
 
-    res.status(201).json(newMsg);
+    res.status(201).json(savedMsg);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -649,7 +651,12 @@ app.delete("/api/support/messages/:id", authMiddleware, async (req, res) => {
   const { id } = req.params;
   try {
     if (getDbMode() === "mongodb") {
-      await Message.findByIdAndDelete(id);
+      const mongoose = require("mongoose");
+      if (mongoose.Types.ObjectId.isValid(id)) {
+        await Message.findByIdAndDelete(id);
+      } else {
+        await Message.deleteOne({ timestamp: id });
+      }
     } else {
       const messages = await readJsonFile("messages.json");
       const filtered = messages.filter((m) => m.timestamp !== id && m.id !== id);
