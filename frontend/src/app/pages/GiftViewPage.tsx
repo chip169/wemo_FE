@@ -168,19 +168,14 @@ export function GiftViewPage() {
         </div>
       )}
 
-      {/* Main card viewport - simulate dynamic mobile frame for maximum aesthetics */}
+      {/* Main card viewport - clean responsive container instead of phone chassis */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="relative w-full max-w-sm rounded-[2.5rem] overflow-hidden shadow-2xl bg-[#1A1818] border-[3px] border-[#333] p-[3px] aspect-[9/18]"
+        className="w-full max-w-md rounded-3xl overflow-hidden shadow-2xl border border-stone-200/60 bg-white"
       >
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 w-20 h-4 bg-black rounded-full z-30" />
-        <div className="w-full h-full rounded-[2.2rem] overflow-hidden bg-white">
-          <div className="w-full h-full overflow-y-auto no-scrollbar">
-            <RenderLiveTemplate gift={gift} isEditing={false} />
-          </div>
-        </div>
+        <RenderLiveTemplate gift={gift} isEditing={false} />
       </motion.div>
 
       {/* Info bottom */}
