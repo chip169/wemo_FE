@@ -1817,7 +1817,7 @@ export function GiftWizard() {
       {/* Main Layout Workspace */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left Workspace Panel */}
-        <div ref={contentRef} className="flex-1 overflow-y-auto bg-[#FAF8F5]">
+        <div ref={contentRef} className="flex-1 overflow-y-auto bg-[#FAF8F5] no-scrollbar">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 flex flex-col h-full justify-between">
             <AnimatePresence mode="wait">
               <motion.div

@@ -399,3 +399,13 @@
 .dark span[class*="text-stone-400"] {
   color: #a1a1aa !important;
 }
+
+/* Custom utility to hide scrollbars */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+}
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
