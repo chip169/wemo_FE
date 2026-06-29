@@ -158,6 +158,7 @@ export function RenderLiveTemplate({
     photos: gift.photos,
     isEditing,
     onUpdate,
+    gift,
   };
 
   switch (gift.templateId) {
@@ -576,6 +577,49 @@ function Step1({
   );
 }
 
+const compressImage = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+        const maxDim = 1200;
+
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          resolve(event.target?.result as string);
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
+        resolve(dataUrl);
+      };
+      img.onerror = () => {
+        reject(new Error("Không thể tải hình ảnh."));
+      };
+    };
+    reader.onerror = () => reject(new Error("Không thể đọc tệp tin."));
+  });
+};
+
 // Bước 2: Tải Tệp Ký Ức
 function Step2({
   gift,
@@ -587,6 +631,27 @@ function Step2({
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Video States
+  const [videoUploading, setVideoUploading] = useState(false);
+  const [videoMode, setVideoMode] = useState<"upload" | "youtube">("upload");
+  const videoInputRef = useRef<HTMLInputElement>(null);
+
+  // Voice States
+  const [voiceUploading, setVoiceUploading] = useState(false);
+  const [voiceMode, setVoiceMode] = useState<"record" | "upload">("record");
+  const [recording, setRecording] = useState(false);
+  const [recordDuration, setRecordDuration] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<any>(null);
+  const voiceInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
   const addPhoto = () => {
     fileInputRef.current?.click();
   };
@@ -596,6 +661,41 @@ function Step2({
     if (!file) return;
 
     setUploading(true);
+    try {
+      const compressedBase64 = await compressImage(file);
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          file: compressedBase64,
+          fileName: file.name.replace(/\.[^/.]+$/, "") + ".jpg",
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Tải ảnh lên thất bại.");
+      }
+      setGift({ ...gift, photos: [...gift.photos, data.url] });
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const removePhoto = (i: number) => {
+    setGift({ ...gift, photos: gift.photos.filter((_, idx) => idx !== i) });
+  };
+
+  // Video Handlers
+  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setVideoUploading(true);
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = async () => {
@@ -609,33 +709,125 @@ function Step2({
           }),
         });
         const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.error || "Tải ảnh lên thất bại.");
-        }
-        setGift({ ...gift, photos: [...gift.photos, data.url] });
+        if (!res.ok) throw new Error(data.error || "Tải video lên thất bại.");
+        setGift({ ...gift, videoUrl: data.url });
       } catch (err: any) {
         alert(err.message);
       } finally {
-        setUploading(false);
-        if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-        }
+        setVideoUploading(false);
+        if (videoInputRef.current) videoInputRef.current.value = "";
       }
     };
   };
 
-  const removePhoto = (i: number) => {
-    setGift({ ...gift, photos: gift.photos.filter((_, idx) => idx !== i) });
+  // Voice Handlers
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunksRef.current = [];
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/wav" });
+        setVoiceUploading(true);
+        const reader = new FileReader();
+        reader.readAsDataURL(audioBlob);
+        reader.onloadend = async () => {
+          try {
+            const base64data = reader.result as string;
+            const res = await fetch("/api/upload", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                file: base64data,
+                fileName: `voice-${Date.now()}.wav`,
+              }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Tải ghi âm lên thất bại.");
+            setGift({ ...gift, voiceUrl: data.url });
+          } catch (err: any) {
+            alert(err.message);
+          } finally {
+            setVoiceUploading(false);
+          }
+        };
+
+        stream.getTracks().forEach((track) => track.stop());
+      };
+
+      mediaRecorder.start();
+      setRecording(true);
+      setRecordDuration(0);
+      timerRef.current = setInterval(() => {
+        setRecordDuration((d) => d + 1);
+      }, 1000);
+    } catch (err) {
+      alert("Không thể truy cập microphone. Vui lòng kiểm tra quyền truy cập microphone của bạn.");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && recording) {
+      mediaRecorderRef.current.stop();
+      setRecording(false);
+      if (timerRef.current) clearInterval(timerRef.current);
+    }
+  };
+
+  const handleVoiceUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setVoiceUploading(true);
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = async () => {
+      try {
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            file: reader.result as string,
+            fileName: file.name,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Tải tệp âm thanh thất bại.");
+        setGift({ ...gift, voiceUrl: data.url });
+      } catch (err: any) {
+        alert(err.message);
+      } finally {
+        setVoiceUploading(false);
+        if (voiceInputRef.current) voiceInputRef.current.value = "";
+      }
+    };
+  };
+
+  const formatDuration = (sec: number) => {
+    const m = Math.floor(sec / 60).toString().padStart(2, "0");
+    const s = (sec % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
   };
 
   return (
-    <div>
-      <h2 className="mb-2 text-2xl font-bold text-stone-900">Tải Tệp Đa Phương Tiện</h2>
-      <p className="mb-8 text-sm text-stone-500">
-        Đính kèm hình ảnh kỷ niệm, video, âm thanh để món quà thêm phần sinh động
-      </p>
+    <div className="space-y-6">
+      <div>
+        <h2 className="mb-2 text-2xl font-bold text-stone-900">Tải Tệp Đa Phương Tiện</h2>
+        <p className="mb-6 text-sm text-stone-500">
+          Đính kèm hình ảnh kỷ niệm, video, âm thanh để món quà thêm phần sinh động
+        </p>
+      </div>
 
-      <div className="mb-8 bg-white p-5 rounded-2xl border border-stone-200/60 shadow-sm">
+      {/* 1. Photos Section */}
+      <div className="bg-white p-5 rounded-2xl border border-stone-200/60 shadow-sm">
         <h3 className="font-bold text-sm text-stone-800 mb-3 flex items-center gap-2">
           📸 Bộ Sưu Tập Ảnh ({gift.photos.length}/3)
         </h3>
@@ -680,6 +872,7 @@ function Step2({
         </div>
       </div>
 
+      {/* Toggles grid */}
       <div className="grid grid-cols-2 gap-4">
         <button
           onClick={() => setGift({ ...gift, hasVideo: !gift.hasVideo })}
@@ -713,6 +906,204 @@ function Step2({
           <p className="font-bold text-xs text-stone-800">Ghi Âm Lời Chúc</p>
         </button>
       </div>
+
+      {/* 2. Video Form Section */}
+      {gift.hasVideo && (
+        <div className="bg-white p-5 rounded-2xl border border-stone-200/60 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b pb-2">
+            <h3 className="font-bold text-sm text-stone-800">🎬 Nhập Video Clip</h3>
+            <div className="flex gap-2 text-[10px]">
+              <button
+                type="button"
+                onClick={() => setVideoMode("upload")}
+                className={`px-2.5 py-1 rounded-full font-bold border transition-colors ${videoMode === "upload" ? "bg-stone-900 border-stone-900 text-white" : "bg-stone-50 text-stone-500 hover:bg-stone-100"}`}
+              >
+                Tải lên
+              </button>
+              <button
+                type="button"
+                onClick={() => setVideoMode("youtube")}
+                className={`px-2.5 py-1 rounded-full font-bold border transition-colors ${videoMode === "youtube" ? "bg-stone-900 border-stone-900 text-white" : "bg-stone-50 text-stone-500 hover:bg-stone-100"}`}
+              >
+                Link YouTube
+              </button>
+            </div>
+          </div>
+
+          {videoMode === "upload" ? (
+            <div className="flex flex-col items-center justify-center border-2 border-dashed border-stone-200 rounded-xl p-4 bg-stone-50/50">
+              {videoUploading ? (
+                <div className="flex flex-col items-center gap-2 py-4">
+                  <Loader2 className="w-6 h-6 animate-spin text-[#E8B4A8]" />
+                  <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Đang tải video lên...</span>
+                </div>
+              ) : gift.videoUrl && !gift.videoUrl.includes("youtube.com") && !gift.videoUrl.includes("youtu.be") ? (
+                <div className="w-full space-y-3">
+                  <video src={gift.videoUrl} controls className="w-full max-h-40 rounded-xl bg-black" />
+                  <button
+                    onClick={() => setGift({ ...gift, videoUrl: "" })}
+                    className="text-xs text-rose-500 font-bold hover:underline block mx-auto"
+                  >
+                    Xóa Video
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <input
+                    type="file"
+                    ref={videoInputRef}
+                    onChange={handleVideoUpload}
+                    accept="video/*"
+                    style={{ display: "none" }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => videoInputRef.current?.click()}
+                    className="px-4 py-2 border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 text-xs font-bold rounded-xl shadow-sm cursor-pointer transition-colors"
+                  >
+                    Chọn Video (MP4/WebM)
+                  </button>
+                  <p className="text-[9px] text-stone-400 mt-2 text-center">Video ngắn dưới 20MB để tốc độ load nhanh nhất</p>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <input
+                type="text"
+                value={gift.videoUrl || ""}
+                onChange={(e) => setGift({ ...gift, videoUrl: e.target.value })}
+                placeholder="Nhập liên kết YouTube (ví dụ: https://www.youtube.com/watch?v=...)"
+                className="w-full px-4 py-2.5 rounded-xl border border-stone-200 outline-none text-xs text-stone-800 placeholder-stone-400 focus:border-[#E8B4A8]"
+              />
+              {gift.videoUrl && (gift.videoUrl.includes("youtube.com") || gift.videoUrl.includes("youtu.be")) && (
+                <div className="text-center">
+                  <span className="text-[10px] text-green-600 font-bold">✓ Đã gắn liên kết YouTube</span>
+                  <button
+                    onClick={() => setGift({ ...gift, videoUrl: "" })}
+                    className="text-xs text-rose-500 font-bold hover:underline block mx-auto mt-1"
+                  >
+                    Xóa liên kết
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 3. Voice Form Section */}
+      {gift.hasVoice && (
+        <div className="bg-white p-5 rounded-2xl border border-stone-200/60 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b pb-2">
+            <h3 className="font-bold text-sm text-stone-800">🎙️ Lời Chúc Ghi Âm</h3>
+            <div className="flex gap-2 text-[10px]">
+              <button
+                type="button"
+                onClick={() => setVoiceMode("record")}
+                className={`px-2.5 py-1 rounded-full font-bold border transition-colors ${voiceMode === "record" ? "bg-stone-900 border-stone-900 text-white" : "bg-stone-50 text-stone-500 hover:bg-stone-100"}`}
+              >
+                Ghi âm trực tiếp
+              </button>
+              <button
+                type="button"
+                onClick={() => setVoiceMode("upload")}
+                className={`px-2.5 py-1 rounded-full font-bold border transition-colors ${voiceMode === "upload" ? "bg-stone-900 border-stone-900 text-white" : "bg-stone-50 text-stone-500 hover:bg-stone-100"}`}
+              >
+                Tải tệp âm thanh
+              </button>
+            </div>
+          </div>
+
+          {voiceMode === "record" ? (
+            <div className="flex flex-col items-center justify-center border-2 border-dashed border-stone-200 rounded-xl p-4 bg-stone-50/50">
+              {voiceUploading ? (
+                <div className="flex flex-col items-center gap-2 py-4">
+                  <Loader2 className="w-6 h-6 animate-spin text-[#D4AF78]" />
+                  <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Đang lưu file ghi âm...</span>
+                </div>
+              ) : gift.voiceUrl ? (
+                <div className="w-full space-y-3 text-center">
+                  <audio src={gift.voiceUrl} controls className="mx-auto" />
+                  <button
+                    onClick={() => setGift({ ...gift, voiceUrl: "" })}
+                    className="text-xs text-rose-500 font-bold hover:underline block mx-auto"
+                  >
+                    Xóa Ghi Âm
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center space-y-3 py-3">
+                  {recording ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="flex items-center gap-2 text-rose-500 font-bold animate-pulse text-xs">
+                        <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
+                        Đang ghi âm: {formatDuration(recordDuration)}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={stopRecording}
+                        className="w-12 h-12 rounded-full bg-stone-950 text-white flex items-center justify-center hover:scale-105 active:scale-95 shadow transition-all cursor-pointer"
+                      >
+                        <span className="text-sm font-bold">■</span>
+                      </button>
+                      <p className="text-[9px] text-stone-400 text-center">Nhấn nút vuông để hoàn thành ghi âm</p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={startRecording}
+                        className="w-12 h-12 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center hover:scale-105 active:scale-95 shadow-md transition-all cursor-pointer"
+                      >
+                        <Mic className="w-5 h-5 fill-white" />
+                      </button>
+                      <p className="text-[10px] text-stone-500 font-semibold text-center">Bấm để bắt đầu ghi âm bằng microphone</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center border-2 border-dashed border-stone-200 rounded-xl p-4 bg-stone-50/50">
+              {voiceUploading ? (
+                <div className="flex flex-col items-center gap-2 py-4">
+                  <Loader2 className="w-6 h-6 animate-spin text-[#D4AF78]" />
+                  <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Đang tải tệp âm thanh...</span>
+                </div>
+              ) : gift.voiceUrl ? (
+                <div className="w-full space-y-3 text-center">
+                  <audio src={gift.voiceUrl} controls className="mx-auto" />
+                  <button
+                    onClick={() => setGift({ ...gift, voiceUrl: "" })}
+                    className="text-xs text-rose-500 font-bold hover:underline block mx-auto"
+                  >
+                    Xóa Tệp Âm Thanh
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <input
+                    type="file"
+                    ref={voiceInputRef}
+                    onChange={handleVoiceUpload}
+                    accept="audio/*"
+                    style={{ display: "none" }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => voiceInputRef.current?.click()}
+                    className="px-4 py-2 border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 text-xs font-bold rounded-xl shadow-sm cursor-pointer transition-colors"
+                  >
+                    Chọn Tệp Âm Thanh (MP3/WAV)
+                  </button>
+                  <p className="text-[9px] text-stone-400 mt-2 text-center">Tải lên tệp ghi âm sẵn từ máy tính/điện thoại</p>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -735,25 +1126,9 @@ function Step3({
         Chỉnh sửa trực tiếp trên thiệp hoặc sử dụng form bên dưới để cá nhân hóa nội dung
       </p>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-        {/* Left: Live editable template preview */}
-        <div className="order-2 lg:order-1">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-xs font-bold text-stone-500 uppercase tracking-wider">Xem trước trực tiếp</span>
-          </div>
-          <DirectPreview
-            gift={gift}
-            isEditing={true}
-            onUpdate={updateField}
-          />
-          <p className="text-[10px] text-stone-400 mt-2 text-center italic">
-            💡 Click trực tiếp vào ảnh, chữ trên thiệp để chỉnh sửa
-          </p>
-        </div>
-
-        {/* Right: Edit form panel */}
-        <div className="order-1 lg:order-2 space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        {/* Left Column: Edit form panel (1/3) */}
+        <div className="lg:col-span-1 space-y-4">
           <div className="bg-white p-5 rounded-2xl border border-stone-200/60 shadow-sm space-y-4">
             <div className="flex items-center gap-2 mb-1">
               <Sparkles className="w-4 h-4 text-[#E8B4A8]" />
@@ -814,6 +1189,22 @@ function Step3({
             </div>
           </div>
         </div>
+
+        {/* Right Column: Live editable template preview (2/3) */}
+        <div className="lg:col-span-2 flex flex-col items-center">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            <span className="text-xs font-bold text-stone-500 uppercase tracking-wider">Xem trước trực tiếp</span>
+          </div>
+          <DirectPreview
+            gift={gift}
+            isEditing={true}
+            onUpdate={updateField}
+          />
+          <p className="text-[10px] text-stone-400 mt-2 text-center italic">
+            💡 Click trực tiếp vào ảnh, chữ trên thiệp để chỉnh sửa
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -851,7 +1242,7 @@ function Step4({
   ];
 
   return (
-    <div className="max-w-4xl mx-auto font-sans">
+    <div className="max-w-6xl mx-auto font-sans">
       <h2 className="mb-2 text-2xl font-black text-stone-900 text-center lg:text-left">
         Kiểm Tra & Xem Trước Thiệp
       </h2>
@@ -859,9 +1250,9 @@ function Step4({
         Xem trước hiển thị trên thiết bị di động và kiểm tra thông số đóng gói chip NFC
       </p>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        {/* Left Column: Packing details */}
-        <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        {/* Left Column: Packing details (1/3) */}
+        <div className="lg:col-span-1 space-y-6">
           <div className="rounded-3xl border border-white/40 bg-white/60 backdrop-blur-md overflow-hidden shadow-xl">
             <div className="px-6 py-4 bg-stone-900 text-white flex items-center justify-between">
               <h3 className="text-xs font-black tracking-wider uppercase flex items-center gap-2">
@@ -917,8 +1308,8 @@ function Step4({
           </motion.button>
         </div>
 
-        {/* Right Column: Template Preview */}
-        <div className="flex flex-col items-center justify-center">
+        {/* Right Column: Template Preview (2/3) */}
+        <div className="lg:col-span-2 flex flex-col items-center justify-center">
           <p className="text-[9px] font-black text-stone-400 uppercase tracking-[0.2em] mb-5 flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
             XEM TRƯỚC THIỆP NGƯỜI NHẬN
@@ -1160,19 +1551,61 @@ function SuccessScreen({
               <h3 className="font-black text-stone-900 text-sm mb-4">Ghi Thẻ WEMO NFC</h3>
 
               {nfcStatus === "idle" && (
-                <div className="py-6 space-y-6">
-                  <div className="w-20 h-20 rounded-full bg-stone-100 flex items-center justify-center mx-auto text-stone-400">
-                    <Wifi className="w-10 h-10" />
-                  </div>
-                  <p className="text-xs text-stone-600 leading-relaxed max-w-[85%] mx-auto">
-                    Bật kết nối NFC trên điện thoại, áp mặt lưng thiết bị vào chip WEMO và bấm bắt đầu để mã hóa.
-                  </p>
-                  <button
-                    onClick={handleWriteNFC}
-                    className="w-full py-3 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-bold shadow cursor-pointer"
-                  >
-                    Bắt Đầu Ghi NFC
-                  </button>
+                <div className="py-2.5 text-left">
+                  {!("NDEFReader" in window) ? (
+                    <div className="space-y-4">
+                      <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center mx-auto text-amber-500 mb-1 border border-amber-100 shadow-inner">
+                        <Wifi className="w-6 h-6 animate-pulse" />
+                      </div>
+                      <p className="text-[11px] text-stone-600 leading-relaxed text-center font-medium">
+                        Trình duyệt/HĐH hiện tại không hỗ trợ ghi NFC trực tiếp (iOS Safari/Chrome/Facebook Browser).
+                      </p>
+                      
+                      <div className="space-y-2 pt-1.5">
+                        <div className="p-3 bg-stone-50 border border-stone-100 rounded-xl text-left">
+                          <p className="text-[10px] font-bold text-stone-800 mb-1">Cách 1: Sử dụng Mã QR</p>
+                          <p className="text-[9px] text-stone-500 leading-relaxed">
+                            Quét hoặc in mã QR từ màn hình trước để dán lên quà. Người nhận quét QR là mở được thiệp tức thì.
+                          </p>
+                        </div>
+                        
+                        <div className="p-3 bg-stone-50 border border-stone-100 rounded-xl text-left">
+                          <p className="text-[10px] font-bold text-stone-800 mb-1">Cách 2: Ghi qua app NFC Tools (Khuyên dùng)</p>
+                          <ol className="list-decimal list-inside text-[9px] text-stone-500 space-y-1 mt-1 leading-relaxed">
+                            <li>Nhấn nút bên dưới để chép link thiệp quà tặng.</li>
+                            <li>Tải ứng dụng <strong>NFC Tools</strong> (miễn phí) trên App Store.</li>
+                            <li>Mở app → chọn <strong>Write</strong> → <strong>Add a record</strong> → <strong>URL</strong>.</li>
+                            <li>Dán liên kết đã chép vào → nhấn <strong>Write</strong> và áp lưng máy vào chip NFC để ghi.</li>
+                          </ol>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(giftUrl);
+                          alert("Đã sao chép liên kết thiệp quà tặng! Bạn có thể dán vào ứng dụng NFC Tools để ghi thẻ.");
+                        }}
+                        className="w-full py-3 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-bold shadow text-center cursor-pointer active:scale-98 transition-all block mt-2"
+                      >
+                        Sao Chép Link Quà Tặng
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-6 py-4 text-center">
+                      <div className="w-20 h-20 rounded-full bg-stone-100 flex items-center justify-center mx-auto text-stone-400">
+                        <Wifi className="w-10 h-10" />
+                      </div>
+                      <p className="text-xs text-stone-650 leading-relaxed max-w-[85%] mx-auto">
+                        Bật kết nối NFC trên điện thoại, áp mặt lưng thiết bị vào chip WEMO và bấm bắt đầu để mã hóa.
+                      </p>
+                      <button
+                        onClick={handleWriteNFC}
+                        className="w-full py-3 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-bold shadow cursor-pointer"
+                      >
+                        Bắt Đầu Ghi NFC
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
