@@ -7,6 +7,7 @@ const { connectDB, getDbMode } = require("./config/db");
 const { readJsonFile, writeJsonFile } = require("./utils/storage");
 const { hashPassword, generateToken, signOrderId, verifyOrderIdSignature } = require("./utils/auth");
 const authMiddleware = require("./middleware/authMiddleware");
+const rateLimiter = require("./middleware/rateLimiter");
 
 const Gift = require("./models/Gift");
 const Order = require("./models/Order");
@@ -192,8 +193,8 @@ app.post("/api/upload", async (req, res) => {
   }
 });
 
-// 1. Validate Order ID & check if gift already exists
-app.post("/api/orders/validate", async (req, res) => {
+// 1. Validate Order ID & check if gift already exists (with rate limiting)
+app.post("/api/orders/validate", rateLimiter, async (req, res) => {
   const { orderId } = req.body;
   if (!orderId) {
     return res.status(400).json({ error: "Thiếu mã đơn hàng." });
