@@ -9,6 +9,7 @@ import { FAQPage } from "./pages/FAQPage";
 import { GiftWizard } from "./pages/GiftWizard";
 import { GiftViewPage } from "./pages/GiftViewPage";
 import { Admin } from "./components/admin/Admin";
+import { NotFoundPage } from "./pages/NotFoundPage";
 
 export const router = createBrowserRouter([
   {
@@ -34,5 +35,9 @@ export const router = createBrowserRouter([
       { path: "pricing", Component: PricingPage },
       { path: "faq", Component: FAQPage },
     ],
+  },
+  {
+    path: "*",
+    Component: NotFoundPage,
   },
 ]);
