@@ -121,7 +121,4 @@ npm run dev
 
 _(Frontend sẽ chạy ở cổng `http://localhost:5173` và tự động kết nối proxy API tới backend ở cổng `5000`)_
 
-### 🔑 Thông tin Đăng Nhập Trang Admin (`/admin`):
 
-- **Tên đăng nhập**: `admin`
-- **Mật khẩu**: `admin123`
