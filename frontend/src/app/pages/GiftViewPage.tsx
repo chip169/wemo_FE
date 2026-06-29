@@ -158,7 +158,7 @@ export function GiftViewPage() {
           : ["#8B7355", "#D4C4A8", "#C4B498", "#E6DFD5", "#FAF7F4"];
 
   return (
-    <div className="min-h-screen bg-[#FAF8F5] relative overflow-hidden flex flex-col items-center justify-center py-12 px-4">
+    <div className="h-screen w-full overflow-y-auto no-scrollbar bg-[#FAF8F5] relative flex flex-col items-center justify-start py-8 px-4 md:py-12">
       {/* Background Particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {Array.from({ length: 20 }).map((_, i) => (

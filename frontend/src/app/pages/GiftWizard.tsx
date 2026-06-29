@@ -193,7 +193,7 @@ function DirectPreview({
 }) {
   return (
     <div className="w-full rounded-2xl overflow-hidden border border-stone-200/60 shadow-lg bg-white">
-      <div className="w-full overflow-y-auto max-h-[600px]" style={{ scrollbarWidth: 'thin' }}>
+      <div className="w-full overflow-y-auto max-h-[600px] no-scrollbar">
         <RenderLiveTemplate
           gift={gift}
           isEditing={isEditing}

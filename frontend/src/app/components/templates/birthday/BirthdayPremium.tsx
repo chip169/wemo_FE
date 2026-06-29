@@ -315,7 +315,7 @@ export default function BirthdayPremium({
             initial={{ opacity: 0, y: 100 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="w-full flex flex-col justify-start relative px-6 py-10 space-y-12 luxury-card-texture overflow-y-auto max-h-[80vh]"
+            className="w-full flex flex-col justify-start relative px-6 py-10 space-y-12 luxury-card-texture"
           >
             {/* Sparkles particle background */}
             <div className="absolute inset-0 pointer-events-none opacity-20 bg-[radial-gradient(#D4AF78_1px,transparent_1px)] [background-size:24px_24px] z-0" />
@@ -553,7 +553,7 @@ export default function BirthdayPremium({
               </form>
 
               {/* Messages list */}
-              <div className="space-y-3 mt-4 text-left max-h-[220px] overflow-y-auto pr-1">
+              <div className="space-y-3 mt-4 text-left max-h-[220px] overflow-y-auto pr-1 no-scrollbar">
                 {comments.map((cmt) => (
                   <div key={cmt.id} className="p-3 bg-black/40 rounded-xl border border-stone-850/60 flex items-start gap-3">
                     <div className="w-8 h-8 rounded-full bg-[#D4AF78]/10 border border-[#D4AF78]/20 flex items-center justify-center text-sm shrink-0">

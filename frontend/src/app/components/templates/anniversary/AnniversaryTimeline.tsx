@@ -320,7 +320,7 @@ export default function AnniversaryTimeline({
             initial={{ opacity: 0, y: 100 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="w-full flex flex-col justify-start relative px-6 py-10 space-y-12 kraft-paper-texture overflow-y-auto max-h-[85vh]"
+            className="w-full flex flex-col justify-start relative px-6 py-10 space-y-12 kraft-paper-texture"
           >
             {/* Fine texture particles */}
             <div className="absolute inset-0 pointer-events-none opacity-20 bg-[radial-gradient(#8B7355_1px,transparent_1px)] [background-size:20px_20px] z-0" />
@@ -544,7 +544,7 @@ export default function AnniversaryTimeline({
               </form>
 
               {/* Feed */}
-              <div className="space-y-3 mt-4 text-left max-h-[200px] overflow-y-auto pr-1">
+              <div className="space-y-3 mt-4 text-left max-h-[200px] overflow-y-auto pr-1 no-scrollbar">
                 {comments.map((cmt) => (
                   <div key={cmt.id} className="p-3 bg-white/40 rounded-xl border border-[#D4C4A8]/40 flex items-start gap-3">
                     <div className="w-8 h-8 rounded-full bg-stone-100 border border-stone-200 flex items-center justify-center text-sm shrink-0">

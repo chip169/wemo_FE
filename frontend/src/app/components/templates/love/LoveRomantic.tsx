@@ -319,7 +319,7 @@ export default function LoveRomantic({
             initial={{ opacity: 0, y: 100 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="w-full flex flex-col justify-start relative px-6 py-10 space-y-12 overflow-y-auto max-h-[85vh]"
+            className="w-full flex flex-col justify-start relative px-6 py-10 space-y-12"
           >
             {/* Background love particles */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
@@ -572,7 +572,7 @@ export default function LoveRomantic({
               </form>
 
               {/* Comments Feed */}
-              <div className="space-y-3 mt-4 text-left max-h-[200px] overflow-y-auto pr-1">
+              <div className="space-y-3 mt-4 text-left max-h-[200px] overflow-y-auto pr-1 no-scrollbar">
                 {comments.map((cmt) => (
                   <div key={cmt.id} className="p-3 bg-white/30 rounded-xl border border-white/50 flex items-start gap-3">
                     <div className="w-8 h-8 rounded-full bg-rose-100 border border-rose-200 flex items-center justify-center text-sm shrink-0">
