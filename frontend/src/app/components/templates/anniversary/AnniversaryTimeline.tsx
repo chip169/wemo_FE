@@ -1,7 +1,7 @@
 import { Camera, Calendar, Sparkles, Send, Clock, Play, Pause } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import confetti from "canvas-confetti";
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 
 type TemplateProps = {
   recipientName: string;

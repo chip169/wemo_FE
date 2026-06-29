@@ -1,7 +1,7 @@
 import { Crown, Camera, Sparkles, MessageSquare, Send, Heart, Calendar, MapPin, Clock, Play, Pause, Video as VideoIcon } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import confetti from "canvas-confetti";
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 
 type TemplateProps = {
   recipientName: string;
