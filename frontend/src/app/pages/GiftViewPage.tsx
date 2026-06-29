@@ -112,18 +112,37 @@ export function GiftViewPage() {
 
   if (error || !gift) {
     return (
-      <div className="min-h-screen bg-[#FAF8F5] flex flex-col items-center justify-center p-6 text-center">
-        <div className="text-4xl mb-3">⚠️</div>
-        <h2 className="text-lg font-black text-stone-900 mb-1">Không Tìm Thấy Quà Tặng</h2>
-        <p className="text-xs text-stone-500 max-w-xs mb-6">
-          Mã liên kết thiệp này không chính xác hoặc đã bị xóa khỏi hệ thống.
-        </p>
-        <Link
-          to="/"
-          className="px-5 py-2 bg-stone-900 text-white rounded-xl text-xs font-bold shadow hover:opacity-95"
+      <div className="min-h-screen bg-[#FAF8F5] relative overflow-hidden flex flex-col items-center justify-center p-6 text-center select-none">
+        {/* Glowing shapes */}
+        <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full bg-[#E8B4A8]/10 blur-[80px] pointer-events-none" />
+        <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-80 h-80 rounded-full bg-[#D4AF78]/10 blur-[80px] pointer-events-none" />
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-sm p-8 rounded-[2.5rem] bg-white/70 border border-white/40 shadow-2xl backdrop-blur-md relative z-10 flex flex-col items-center"
         >
-          Quay lại Trang Chủ
-        </Link>
+          <div className="w-16 h-16 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-500 mb-5 border border-amber-100 shadow-inner">
+            <span className="text-3xl">⚠️</span>
+          </div>
+          
+          <h2 className="text-lg font-extrabold text-stone-900 mb-2">Không Tìm Thấy Quà Tặng</h2>
+          <p className="text-xs text-stone-500 max-w-xs mb-6 leading-relaxed">
+            Liên kết quà tặng này không tồn tại hoặc đã hết hạn xác thực trên hệ thống WEMO.
+          </p>
+
+          <Link
+            to="/"
+            className="w-full py-3 bg-gradient-to-r from-stone-800 to-stone-950 text-white rounded-xl text-xs font-bold shadow-md hover:opacity-95 text-center active:scale-98 transition-all block cursor-pointer"
+          >
+            Quay lại Trang Chủ
+          </Link>
+        </motion.div>
+
+        <p className="mt-8 text-[10px] text-stone-400 font-bold uppercase tracking-widest relative z-10">
+          WEMO NFC PLATFORM
+        </p>
       </div>
     );
   }
