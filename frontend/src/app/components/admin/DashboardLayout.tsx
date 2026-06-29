@@ -266,8 +266,9 @@ export function DashboardLayout({
                   </button>
                   <button 
                     onClick={() => {
-                      localStorage.removeItem("adminToken");
-                      window.location.reload();
+                      localStorage.removeItem("wemo_admin_token");
+                      sessionStorage.removeItem("admin_logged_in");
+                      window.location.href = "/";
                     }}
                     className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
                   >

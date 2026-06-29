@@ -377,6 +377,15 @@ function OrderCheckGateway({
             </button>
           </form>
         )}
+
+        <div className="mt-6 border-t border-stone-100 pt-4">
+          <Link
+            to="/"
+            className="text-xs font-bold text-stone-400 hover:text-stone-600 inline-flex items-center gap-1 transition-colors"
+          >
+            ← Quay lại trang chủ
+          </Link>
+        </div>
       </motion.div>
     </div>
   );
@@ -1244,7 +1253,7 @@ function SuccessScreen({
 
 const defaultGift = (orderId: string, orderSignature: string): GiftData => ({
   theme: "sinh-nhat",
-  templateId: "sinh-nhat-party",
+  templateId: "sinh-nhat-premium",
   photos: [],
   hasVideo: false,
   hasVoice: false,
@@ -1390,7 +1399,7 @@ export function GiftWizard() {
             </AnimatePresence>
 
             {/* Bottom Nav Action Control */}
-            {step < STEPS.length - 1 && (
+            {step < STEPS.length - 1 ? (
               <div className="flex items-center justify-between mt-12 pt-5 border-t border-stone-200/60">
                 <button
                   onClick={back}
@@ -1407,6 +1416,15 @@ export function GiftWizard() {
                 >
                   Kế Tiếp
                   <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-start mt-12 pt-5 border-t border-stone-200/60">
+                <button
+                  onClick={back}
+                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all bg-white border border-stone-200 text-stone-700 hover:bg-stone-50"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" /> Quay lại thiết kế
                 </button>
               </div>
             )}
