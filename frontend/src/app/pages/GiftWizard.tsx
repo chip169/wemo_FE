@@ -29,6 +29,7 @@ import confetti from "canvas-confetti";
 import { BirthdayCanvas3D } from "../components/gift3d/BirthdayCanvas3D";
 import { LoveCanvas3D } from "../components/gift3d/LoveCanvas3D";
 import { GalaxyCanvas3D } from "../components/gift3d/GalaxyCanvas3D";
+import { HeartCanvas3D } from "../components/gift3d/HeartCanvas3D";
 
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -52,19 +53,11 @@ export type GiftData = {
 const STEPS = [
   "Chủ Đề",
   "Chọn Mẫu",
-  "Tải Tệp",
   "Thiết Kế",
   "Hoàn Thành",
 ];
 
 const THEMES = [
-  {
-    id: "sinh-nhat",
-    name: "Sinh Nhật",
-    emoji: "🎂",
-    description: "Chúc mừng tuổi mới rực rỡ và tràn đầy niềm vui.",
-    color: "from-[#FF9A9E] to-[#FECFEF]",
-  },
   {
     id: "tinh-yeu",
     name: "Tình Yêu",
@@ -72,32 +65,9 @@ const THEMES = [
     description: "Lời bày tỏ ngọt ngào, ấm áp cho nửa kia của bạn.",
     color: "from-[#FF8A8A] to-[#FFA3A3]",
   },
-  {
-    id: "ky-niem",
-    name: "Kỷ Niệm",
-    emoji: "📸",
-    description: "Lưu giữ chặng đường và khoảnh khắc thời gian đã qua.",
-    color: "from-[#D4C4A8] to-[#C4B498]",
-  },
-  {
-    id: "giang-sinh",
-    name: "Giáng Sinh & Lễ Hội",
-    emoji: "🎄",
-    description: "Gửi sự ấm áp và an lành mùa lễ Noel cuối năm.",
-    color: "from-[#4A7C2F] to-[#2D5016]",
-  },
 ];
 
 const TEMPLATES = [
-  {
-    id: "sinh-nhat-premium",
-    name: "Sinh Nhật Hoàng Gia Premium",
-    emoji: "👑",
-    color: "#D4AF78",
-    light: "#2c2519",
-    img: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&q=80",
-    theme: "sinh-nhat",
-  },
   {
     id: "love-romantic",
     name: "Mãi Yêu Thương",
@@ -106,24 +76,6 @@ const TEMPLATES = [
     light: "#FFF5F5",
     img: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=400&q=80",
     theme: "tinh-yeu",
-  },
-  {
-    id: "anniversary-timeline",
-    name: "Dòng Thời Gian Kỷ Niệm",
-    emoji: "📅",
-    color: "#8B7355",
-    light: "#FAF7F4",
-    img: "https://images.unsplash.com/photo-1523521803700-b3bcaeab0150?w=400&q=80",
-    theme: "ky-niem",
-  },
-  {
-    id: "christmas-cozy",
-    name: "Mùa Noel Ấm Áp",
-    emoji: "🎄",
-    color: "#2D5016",
-    light: "#F5F9F2",
-    img: "https://images.unsplash.com/photo-1482517967863-00e15c9b44be?w=400&q=80",
-    theme: "giang-sinh",
   },
 ];
 
@@ -157,13 +109,13 @@ export function RenderLiveTemplate({
     return <BirthdayCanvas3D gift={gift} />;
   }
   if (theme === "tinh-yeu" || gift.templateId === "love-romantic" || gift.templateId === "christmas-cozy") {
-    return <LoveCanvas3D gift={gift} />;
+    return <HeartCanvas3D gift={gift} />;
   }
   if (theme === "ky-niem" || gift.templateId === "anniversary-timeline") {
     return <GalaxyCanvas3D gift={gift} />;
   }
 
-  return <LoveCanvas3D gift={gift} />;
+  return <HeartCanvas3D gift={gift} />;
 }
 
 // ─── Direct Preview (no phone shell) ─────────────────────────────────────────
@@ -604,7 +556,7 @@ const compressImage = (file: File): Promise<string> => {
   });
 };
 
-// Bước 2: Tải Tệp Ký Ức
+// Bước 2: Thiết Kế & Tải Tệp
 function Step2({
   gift,
   setGift,
@@ -693,7 +645,6 @@ function Step2({
     stopAiCamera();
   };
 
-  // Stop camera stream on unmount
   useEffect(() => {
     return () => {
       if (aiStreamRef.current) {
@@ -701,7 +652,6 @@ function Step2({
       }
     };
   }, []);
-
 
   const handlePortraitSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -741,8 +691,8 @@ function Step2({
 
   const handleAddChibiToAlbum = () => {
     if (!aiResultUrl) return;
-    if (gift.photos.length >= 3) {
-      alert("Bộ sưu tập ảnh thiệp đã đầy (Tối đa 3 ảnh). Vui lòng xóa bớt ảnh trước khi thêm.");
+    if (gift.photos.length >= 6) {
+      alert("Bộ sưu tập ảnh thiệp đã đầy (Tối đa 6 ảnh). Vui lòng xóa bớt ảnh trước khi thêm.");
       return;
     }
     setGift({ ...gift, photos: [...gift.photos, aiResultUrl] });
@@ -750,7 +700,6 @@ function Step2({
     setAiResultUrl(null);
     setAiExpanded(false);
   };
-
 
   // Video States
   const [videoUploading, setVideoUploading] = useState(false);
@@ -811,7 +760,6 @@ function Step2({
     setGift({ ...gift, photos: gift.photos.filter((_, idx) => idx !== i) });
   };
 
-  // Video Handlers
   const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -841,7 +789,6 @@ function Step2({
     };
   };
 
-  // Voice Handlers
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -938,511 +885,21 @@ function Step2({
     return `${m}:${s}`;
   };
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="mb-2 text-2xl font-bold text-stone-900">Tải Tệp Đa Phương Tiện</h2>
-        <p className="mb-6 text-sm text-stone-500">
-          Đính kèm hình ảnh kỷ niệm, video, âm thanh để món quà thêm phần sinh động
-        </p>
-      </div>
-
-      {/* 1. Photos Section */}
-      <div className="bg-white p-5 rounded-2xl border border-stone-200/60 shadow-sm">
-        <h3 className="font-bold text-sm text-stone-800 mb-3 flex items-center gap-2">
-          📸 Bộ Sưu Tập Ảnh ({gift.photos.length}/3)
-        </h3>
-        <div className="flex flex-wrap gap-3">
-          {gift.photos.map((src, i) => (
-            <motion.div
-              key={i}
-              className="relative rounded-xl overflow-hidden shadow-sm w-16 h-16 border"
-            >
-              <img src={src} alt="" className="w-full h-full object-cover" />
-              <button
-                onClick={() => removePhoto(i)}
-                className="absolute top-1 right-1 w-4 h-4 rounded-full bg-black/70 flex items-center justify-center cursor-pointer"
-              >
-                <X className="w-2.5 h-2.5 text-white" />
-              </button>
-            </motion.div>
-          ))}
-          {uploading && (
-            <div className="w-16 h-16 rounded-xl flex items-center justify-center border border-stone-200 bg-stone-50">
-              <Loader2 className="w-4 h-4 animate-spin text-[#E8B4A8]" />
-            </div>
-          )}
-          {!uploading && gift.photos.length < 3 && (
-            <>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                accept="image/*"
-                style={{ display: "none" }}
-              />
-              <button
-                onClick={addPhoto}
-                className="w-16 h-16 rounded-xl flex flex-col items-center justify-center border-2 border-dashed border-stone-300 hover:border-orange-400 bg-stone-50 text-stone-400 transition-colors cursor-pointer"
-              >
-                <Image className="w-4 h-4 mb-0.5" />
-                <span className="text-[10px] font-medium">Thêm</span>
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* AI Chibi Generator Widget */}
-      <div className="bg-gradient-to-r from-amber-50 to-[#E8B4A8]/10 p-5 rounded-2xl border border-[#E8B4A8]/20 shadow-sm text-left">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4.5 h-4.5 text-[#E8B4A8] fill-[#E8B4A8]/20 animate-pulse" />
-            <h3 className="font-bold text-xs text-stone-800 uppercase tracking-wider">
-              Vẽ Mô Hình Chibi AI (Mới)
-            </h3>
-          </div>
-          <button
-            type="button"
-            onClick={() => setAiExpanded(!aiExpanded)}
-            className="px-3 py-1.5 rounded-xl bg-white border hover:bg-stone-50 text-[10px] font-bold text-stone-750 transition-colors shadow-sm cursor-pointer"
-          >
-            {aiExpanded ? "Đóng Công Cụ" : "Mở Công Cụ ✨"}
-          </button>
-        </div>
-
-        {aiExpanded && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            className="mt-4 pt-4 border-t border-dashed border-stone-200 space-y-4 overflow-hidden"
-          >
-            <p className="text-[11px] text-stone-500 leading-relaxed font-medium">
-              Tải ảnh chân dung của người nhận lên, AI của WEMO sẽ tự động chuyển thành mô hình chibi 3D hoạt hình đáng yêu và chèn thẳng vào thiệp.
-            </p>
-
-            {!portraitImage && !aiGenerating && !aiResultUrl && (
-              <div className="space-y-3">
-                {aiShowCamera ? (
-                  <div className="relative rounded-xl overflow-hidden border bg-black aspect-video flex flex-col justify-between p-3 h-[200px]">
-                    <video
-                      ref={aiVideoRef}
-                      autoPlay
-                      playsInline
-                      muted
-                      className="absolute inset-0 w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/25 pointer-events-none" />
-                    <div className="z-10 flex justify-between items-start w-full">
-                      <span className="text-[8px] bg-red-650 text-white font-bold px-1.5 py-0.5 rounded-full animate-pulse flex items-center gap-1">
-                        ● CAMERA
-                      </span>
-                    </div>
-                    
-                    <div className="z-10 flex gap-2 justify-center w-full">
-                      <button
-                        type="button"
-                        onClick={stopAiCamera}
-                        className="px-3 py-1.5 rounded-lg bg-stone-900/80 hover:bg-stone-900 text-white text-[9px] font-bold cursor-pointer"
-                      >
-                        Hủy
-                      </button>
-                      <button
-                        type="button"
-                        onClick={captureAiPhoto}
-                        className="px-4 py-1.5 rounded-lg bg-[#E8B4A8] text-white text-[9px] font-black shadow flex items-center gap-1 cursor-pointer"
-                      >
-                        <Camera className="w-3 h-3" /> Chụp
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div
-                      onClick={() => portraitInputRef.current?.click()}
-                      className="border-2 border-dashed border-stone-200 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-white/40 transition-colors bg-white/10"
-                    >
-                      <input
-                        type="file"
-                        ref={portraitInputRef}
-                        onChange={handlePortraitSelect}
-                        accept="image/*"
-                        className="hidden"
-                      />
-                      <Upload className="w-6 h-6 text-stone-400 mb-2" />
-                      <span className="text-[10px] font-bold text-stone-700">Tải ảnh chân dung lên</span>
-                      <span className="text-[8px] text-stone-400 mt-1">Ảnh chân dung đơn, rõ mặt</span>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={startAiCamera}
-                      className="w-full py-2 bg-white hover:bg-stone-50 border rounded-xl text-[10px] font-bold text-stone-700 flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
-                    >
-                      <Camera className="w-3.5 h-3.5 text-[#E8B4A8]" /> Chụp Ảnh Trực Tiếp Từ Camera
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
-
-            {aiGenerating && (
-              <div className="py-6 flex flex-col items-center justify-center text-center bg-white/50 rounded-xl border border-stone-100 shadow-inner">
-                <Loader2 className="w-7 h-7 animate-spin text-[#E8B4A8] mb-2.5" />
-                <p className="text-xs font-bold text-stone-800">{aiLoadingSteps[aiLoadingStep]}</p>
-                <p className="text-[9px] text-[#E8B4A8] font-bold animate-pulse uppercase tracking-wider mt-1">Wemo Magic Studio</p>
-              </div>
-            )}
-
-            {portraitImage && !aiGenerating && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4 items-center">
-                  <div className="space-y-1">
-                    <p className="text-[9px] font-bold text-stone-400 uppercase tracking-widest text-center">Ảnh chân dung</p>
-                    <div className="aspect-square rounded-xl overflow-hidden border bg-white flex items-center justify-center">
-                      <img src={portraitImage} className="w-full h-full object-cover" alt="" />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <p className="text-[9px] font-bold text-[#D4AF78] uppercase tracking-widest text-center">Mô hình chibi AI</p>
-                    <div className="aspect-square rounded-xl overflow-hidden border-2 border-[#D4AF78]/40 bg-white flex items-center justify-center relative">
-                      {aiResultUrl ? (
-                        <img src={aiResultUrl} className="w-full h-full object-cover" alt="" />
-                      ) : (
-                        <div className="text-center p-3 text-[10px] text-stone-400">
-                          <ImageIcon className="w-6 h-6 mx-auto mb-1 stroke-1" />
-                          Chọn phong cách & bấm tạo chibi bên dưới
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {!aiResultUrl && (
-                  <div className="space-y-2">
-                    <label className="block text-[10px] font-black text-stone-600 uppercase tracking-wider">Chọn phong cách</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {[
-                        { id: "cute-3d", label: "Teddy 3D 🧸" },
-                        { id: "anime", label: "Anime 🎨" },
-                        { id: "royal", label: "Hoàng Gia 👑" },
-                        { id: "christmas", label: "Noel 🎄" }
-                      ].map((item) => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() => setAiStyle(item.id)}
-                          className={`px-3 py-2 rounded-xl text-[10px] font-bold border transition-all text-center cursor-pointer ${
-                            aiStyle === item.id ? "bg-stone-900 border-stone-900 text-white shadow-sm" : "bg-white border-stone-200 text-stone-600 hover:bg-stone-50"
-                          }`}
-                        >
-                          {item.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex gap-2 justify-end pt-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPortraitImage(null);
-                      setAiResultUrl(null);
-                    }}
-                    className="px-3 py-2 rounded-xl border border-stone-200 hover:bg-stone-50 text-[10px] font-bold text-stone-600 cursor-pointer"
-                  >
-                    Hủy bỏ
-                  </button>
-
-                  {aiResultUrl ? (
-                    <button
-                      type="button"
-                      onClick={handleAddChibiToAlbum}
-                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-stone-800 to-stone-950 text-white text-[10px] font-black shadow flex items-center gap-1.5 cursor-pointer hover:scale-102"
-                    >
-                      <Check className="w-3.5 h-3.5" /> Thêm Vào Thiệp
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleGenerateChibi}
-                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#E8B4A8] to-[#D4AF78] text-white text-[10px] font-black shadow flex items-center gap-1 cursor-pointer hover:scale-102"
-                    >
-                      <Sparkles className="w-3.5 h-3.5 fill-white" /> Vẽ Chibi AI
-                    </button>
-                  )}
-                </div>
-
-                {aiError && (
-                  <p className="text-[10px] text-rose-500 font-bold mt-1 text-left leading-normal">
-                    ⚠️ Lỗi: {aiError}
-                  </p>
-                )}
-              </div>
-            )}
-          </motion.div>
-        )}
-      </div>
-
-      {/* Toggles grid */}
-      <div className="grid grid-cols-2 gap-4">
-        <button
-          onClick={() => setGift({ ...gift, hasVideo: !gift.hasVideo })}
-          className="p-4 rounded-2xl flex flex-col items-center text-center gap-2 border-2 transition-all cursor-pointer"
-          style={{
-            borderColor: gift.hasVideo ? "#E8B4A8" : "rgba(0,0,0,0.06)",
-            background: gift.hasVideo ? "rgba(232,180,168,0.05)" : "white",
-          }}
-        >
-          <div
-            className={`w-10 h-10 rounded-xl flex items-center justify-center ${gift.hasVideo ? "bg-orange-100 text-orange-600" : "bg-stone-100 text-stone-400"}`}
-          >
-            <Video className="w-5 h-5" />
-          </div>
-          <p className="font-bold text-xs text-stone-800">Thêm Video Clip</p>
-        </button>
-
-        <button
-          onClick={() => setGift({ ...gift, hasVoice: !gift.hasVoice })}
-          className="p-4 rounded-2xl flex flex-col items-center text-center gap-2 border-2 transition-all cursor-pointer"
-          style={{
-            borderColor: gift.hasVoice ? "#D4AF78" : "rgba(0,0,0,0.06)",
-            background: gift.hasVoice ? "rgba(212,175,120,0.05)" : "white",
-          }}
-        >
-          <div
-            className={`w-10 h-10 rounded-xl flex items-center justify-center ${gift.hasVoice ? "bg-amber-100 text-amber-600" : "bg-stone-100 text-stone-400"}`}
-          >
-            <Mic className="w-5 h-5" />
-          </div>
-          <p className="font-bold text-xs text-stone-800">Ghi Âm Lời Chúc</p>
-        </button>
-      </div>
-
-      {/* 2. Video Form Section */}
-      {gift.hasVideo && (
-        <div className="bg-white p-5 rounded-2xl border border-stone-200/60 shadow-sm space-y-4">
-          <div className="flex items-center justify-between border-b pb-2">
-            <h3 className="font-bold text-sm text-stone-800">🎬 Nhập Video Clip</h3>
-            <div className="flex gap-2 text-[10px]">
-              <button
-                type="button"
-                onClick={() => setVideoMode("upload")}
-                className={`px-2.5 py-1 rounded-full font-bold border transition-colors ${videoMode === "upload" ? "bg-stone-900 border-stone-900 text-white" : "bg-stone-50 text-stone-500 hover:bg-stone-100"}`}
-              >
-                Tải lên
-              </button>
-              <button
-                type="button"
-                onClick={() => setVideoMode("youtube")}
-                className={`px-2.5 py-1 rounded-full font-bold border transition-colors ${videoMode === "youtube" ? "bg-stone-900 border-stone-900 text-white" : "bg-stone-50 text-stone-500 hover:bg-stone-100"}`}
-              >
-                Link YouTube
-              </button>
-            </div>
-          </div>
-
-          {videoMode === "upload" ? (
-            <div className="flex flex-col items-center justify-center border-2 border-dashed border-stone-200 rounded-xl p-4 bg-stone-50/50">
-              {videoUploading ? (
-                <div className="flex flex-col items-center gap-2 py-4">
-                  <Loader2 className="w-6 h-6 animate-spin text-[#E8B4A8]" />
-                  <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Đang tải video lên...</span>
-                </div>
-              ) : gift.videoUrl && !gift.videoUrl.includes("youtube.com") && !gift.videoUrl.includes("youtu.be") ? (
-                <div className="w-full space-y-3">
-                  <video src={gift.videoUrl} controls className="w-full max-h-40 rounded-xl bg-black" />
-                  <button
-                    onClick={() => setGift({ ...gift, videoUrl: "" })}
-                    className="text-xs text-rose-500 font-bold hover:underline block mx-auto"
-                  >
-                    Xóa Video
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <input
-                    type="file"
-                    ref={videoInputRef}
-                    onChange={handleVideoUpload}
-                    accept="video/*"
-                    style={{ display: "none" }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => videoInputRef.current?.click()}
-                    className="px-4 py-2 border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 text-xs font-bold rounded-xl shadow-sm cursor-pointer transition-colors"
-                  >
-                    Chọn Video (MP4/WebM)
-                  </button>
-                  <p className="text-[9px] text-stone-400 mt-2 text-center">Video ngắn dưới 20MB để tốc độ load nhanh nhất</p>
-                </>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <input
-                type="text"
-                value={gift.videoUrl || ""}
-                onChange={(e) => setGift({ ...gift, videoUrl: e.target.value })}
-                placeholder="Nhập liên kết YouTube (ví dụ: https://www.youtube.com/watch?v=...)"
-                className="w-full px-4 py-2.5 rounded-xl border border-stone-200 outline-none text-xs text-stone-800 placeholder-stone-400 focus:border-[#E8B4A8]"
-              />
-              {gift.videoUrl && (gift.videoUrl.includes("youtube.com") || gift.videoUrl.includes("youtu.be")) && (
-                <div className="text-center">
-                  <span className="text-[10px] text-green-600 font-bold">✓ Đã gắn liên kết YouTube</span>
-                  <button
-                    onClick={() => setGift({ ...gift, videoUrl: "" })}
-                    className="text-xs text-rose-500 font-bold hover:underline block mx-auto mt-1"
-                  >
-                    Xóa liên kết
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 3. Voice Form Section */}
-      {gift.hasVoice && (
-        <div className="bg-white p-5 rounded-2xl border border-stone-200/60 shadow-sm space-y-4">
-          <div className="flex items-center justify-between border-b pb-2">
-            <h3 className="font-bold text-sm text-stone-800">🎙️ Lời Chúc Ghi Âm</h3>
-            <div className="flex gap-2 text-[10px]">
-              <button
-                type="button"
-                onClick={() => setVoiceMode("record")}
-                className={`px-2.5 py-1 rounded-full font-bold border transition-colors ${voiceMode === "record" ? "bg-stone-900 border-stone-900 text-white" : "bg-stone-50 text-stone-500 hover:bg-stone-100"}`}
-              >
-                Ghi âm trực tiếp
-              </button>
-              <button
-                type="button"
-                onClick={() => setVoiceMode("upload")}
-                className={`px-2.5 py-1 rounded-full font-bold border transition-colors ${voiceMode === "upload" ? "bg-stone-900 border-stone-900 text-white" : "bg-stone-50 text-stone-500 hover:bg-stone-100"}`}
-              >
-                Tải tệp âm thanh
-              </button>
-            </div>
-          </div>
-
-          {voiceMode === "record" ? (
-            <div className="flex flex-col items-center justify-center border-2 border-dashed border-stone-200 rounded-xl p-4 bg-stone-50/50">
-              {voiceUploading ? (
-                <div className="flex flex-col items-center gap-2 py-4">
-                  <Loader2 className="w-6 h-6 animate-spin text-[#D4AF78]" />
-                  <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Đang lưu file ghi âm...</span>
-                </div>
-              ) : gift.voiceUrl ? (
-                <div className="w-full space-y-3 text-center">
-                  <audio src={gift.voiceUrl} controls className="mx-auto" />
-                  <button
-                    onClick={() => setGift({ ...gift, voiceUrl: "" })}
-                    className="text-xs text-rose-500 font-bold hover:underline block mx-auto"
-                  >
-                    Xóa Ghi Âm
-                  </button>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center space-y-3 py-3">
-                  {recording ? (
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="flex items-center gap-2 text-rose-500 font-bold animate-pulse text-xs">
-                        <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
-                        Đang ghi âm: {formatDuration(recordDuration)}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={stopRecording}
-                        className="w-12 h-12 rounded-full bg-stone-950 text-white flex items-center justify-center hover:scale-105 active:scale-95 shadow transition-all cursor-pointer"
-                      >
-                        <span className="text-sm font-bold">■</span>
-                      </button>
-                      <p className="text-[9px] text-stone-400 text-center">Nhấn nút vuông để hoàn thành ghi âm</p>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={startRecording}
-                        className="w-12 h-12 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center hover:scale-105 active:scale-95 shadow-md transition-all cursor-pointer"
-                      >
-                        <Mic className="w-5 h-5 fill-white" />
-                      </button>
-                      <p className="text-[10px] text-stone-500 font-semibold text-center">Bấm để bắt đầu ghi âm bằng microphone</p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center border-2 border-dashed border-stone-200 rounded-xl p-4 bg-stone-50/50">
-              {voiceUploading ? (
-                <div className="flex flex-col items-center gap-2 py-4">
-                  <Loader2 className="w-6 h-6 animate-spin text-[#D4AF78]" />
-                  <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Đang tải tệp âm thanh...</span>
-                </div>
-              ) : gift.voiceUrl ? (
-                <div className="w-full space-y-3 text-center">
-                  <audio src={gift.voiceUrl} controls className="mx-auto" />
-                  <button
-                    onClick={() => setGift({ ...gift, voiceUrl: "" })}
-                    className="text-xs text-rose-500 font-bold hover:underline block mx-auto"
-                  >
-                    Xóa Tệp Âm Thanh
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <input
-                    type="file"
-                    ref={voiceInputRef}
-                    onChange={handleVoiceUpload}
-                    accept="audio/*"
-                    style={{ display: "none" }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => voiceInputRef.current?.click()}
-                    className="px-4 py-2 border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 text-xs font-bold rounded-xl shadow-sm cursor-pointer transition-colors"
-                  >
-                    Chọn Tệp Âm Thanh (MP3/WAV)
-                  </button>
-                  <p className="text-[9px] text-stone-400 mt-2 text-center">Tải lên tệp ghi âm sẵn từ máy tính/điện thoại</p>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Bước 3: Tự chỉnh sửa tùy ý (2-column: live preview + form)
-function Step3({
-  gift,
-  setGift,
-}: {
-  gift: GiftData;
-  setGift: (g: GiftData) => void;
-}) {
   const updateField = (fields: Partial<GiftData>) =>
     setGift({ ...gift, ...fields });
 
   return (
     <div>
-      <h2 className="mb-2 text-2xl font-bold text-stone-900">Thiết Kế Nội Dung</h2>
-      <p className="mb-8 text-sm text-stone-500">
-        Chỉnh sửa trực tiếp trên thiệp hoặc sử dụng form bên dưới để cá nhân hóa nội dung
+      <h2 className="mb-2 text-2xl font-bold text-stone-900 text-center lg:text-left">Thiết Kế & Tải Tệp</h2>
+      <p className="mb-8 text-sm text-stone-500 text-center lg:text-left">
+        Tải hình ảnh kỷ niệm, viết lời chúc và xem trước mô phỏng 3D thời gian thực bên dưới
       </p>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        {/* Left Column: Edit form panel (1/3) */}
-        <div className="lg:col-span-1 space-y-4">
+        {/* Left Column: Form & Upload Panel (1/3) */}
+        <div className="lg:col-span-1 space-y-4 max-h-[680px] overflow-y-auto pr-2 no-scrollbar">
+          
+          {/* Card 1: Thông tin thiệp */}
           <div className="bg-white p-5 rounded-2xl border border-stone-200/60 shadow-sm space-y-4">
             <div className="flex items-center gap-2 mb-1">
               <Sparkles className="w-4 h-4 text-[#E8B4A8]" />
@@ -1486,6 +943,366 @@ function Step3({
             </div>
           </div>
 
+          {/* Card 2: Photos Section */}
+          <div className="bg-white p-5 rounded-2xl border border-stone-200/60 shadow-sm">
+            <h3 className="font-bold text-sm text-stone-800 mb-3 flex items-center gap-2">
+              📸 Bộ Sưu Tập Ảnh ({gift.photos.length}/6)
+            </h3>
+            <div className="flex flex-wrap gap-3">
+              {gift.photos.map((src, i) => (
+                <motion.div
+                  key={i}
+                  className="relative rounded-xl overflow-hidden shadow-sm w-16 h-16 border"
+                >
+                  <img src={src} alt="" className="w-full h-full object-cover" />
+                  <button
+                    onClick={() => removePhoto(i)}
+                    className="absolute top-1 right-1 w-4 h-4 rounded-full bg-black/70 flex items-center justify-center cursor-pointer border-0"
+                  >
+                    <X className="w-2.5 h-2.5 text-white" />
+                  </button>
+                </motion.div>
+              ))}
+              {uploading && (
+                <div className="w-16 h-16 rounded-xl flex items-center justify-center border border-stone-200 bg-stone-50">
+                  <Loader2 className="w-4 h-4 animate-spin text-[#E8B4A8]" />
+                </div>
+              )}
+              {!uploading && gift.photos.length < 6 && (
+                <>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    accept="image/*"
+                    style={{ display: "none" }}
+                  />
+                  <button
+                    onClick={addPhoto}
+                    className="w-16 h-16 rounded-xl flex flex-col items-center justify-center border-2 border-dashed border-stone-300 hover:border-orange-400 bg-stone-50 text-stone-400 transition-colors cursor-pointer"
+                  >
+                    <Image className="w-4 h-4 mb-0.5" />
+                    <span className="text-[10px] font-medium">Thêm</span>
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Card 3: AI Chibi Generator */}
+          <div className="bg-gradient-to-r from-amber-50 to-[#E8B4A8]/10 p-5 rounded-2xl border border-[#E8B4A8]/20 shadow-sm text-left">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4.5 h-4.5 text-[#E8B4A8] fill-[#E8B4A8]/20 animate-pulse" />
+                <h3 className="font-bold text-xs text-stone-800 uppercase tracking-wider">
+                  Vẽ Mô Hình Chibi AI (Mới)
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAiExpanded(!aiExpanded)}
+                className="px-3 py-1.5 rounded-xl bg-white border hover:bg-stone-50 text-[10px] font-bold text-stone-700 transition-colors shadow-sm cursor-pointer"
+              >
+                {aiExpanded ? "Đóng Công Cụ" : "Mở Công Cụ ✨"}
+              </button>
+            </div>
+
+            {aiExpanded && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                className="mt-4 pt-4 border-t border-dashed border-stone-200 space-y-4 overflow-hidden"
+              >
+                <p className="text-[11px] text-stone-500 leading-relaxed font-medium">
+                  Tải ảnh chân dung của người nhận lên, AI sẽ chuyển thành mô hình chibi và chèn thẳng vào thiệp.
+                </p>
+
+                {!portraitImage && !aiGenerating && !aiResultUrl && (
+                  <div className="space-y-3">
+                    {aiShowCamera ? (
+                      <div className="relative rounded-xl overflow-hidden border bg-black aspect-video flex flex-col justify-between p-3 h-[200px]">
+                        <video
+                          ref={aiVideoRef}
+                          autoPlay
+                          playsInline
+                          muted
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/25 pointer-events-none" />
+                        <div className="z-10 flex justify-between items-start w-full">
+                          <span className="text-[8px] bg-red-650 text-white font-bold px-1.5 py-0.5 rounded-full animate-pulse flex items-center gap-1">
+                            ● CAMERA
+                          </span>
+                        </div>
+                        <div className="z-10 flex gap-2 justify-center w-full">
+                          <button
+                            type="button"
+                            onClick={stopAiCamera}
+                            className="px-3 py-1.5 rounded-lg bg-stone-900/80 hover:bg-stone-900 text-white text-[9px] font-bold cursor-pointer"
+                          >
+                            Hủy
+                          </button>
+                          <button
+                            type="button"
+                            onClick={captureAiPhoto}
+                            className="px-4 py-1.5 rounded-lg bg-[#E8B4A8] text-white text-[9px] font-black shadow flex items-center gap-1 cursor-pointer"
+                          >
+                            <Camera className="w-3 h-3" /> Chụp
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div
+                          onClick={() => portraitInputRef.current?.click()}
+                          className="border-2 border-dashed border-stone-200 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-white/40 transition-colors bg-white/10"
+                        >
+                          <input
+                            type="file"
+                            ref={portraitInputRef}
+                            onChange={handlePortraitSelect}
+                            accept="image/*"
+                            className="hidden"
+                          />
+                          <Upload className="w-6 h-6 text-stone-400 mb-2" />
+                          <span className="text-[10px] font-bold text-stone-700">Tải ảnh chân dung lên</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={startAiCamera}
+                          className="w-full py-2 bg-white hover:bg-stone-50 border rounded-xl text-[10px] font-bold text-stone-700 flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+                        >
+                          <Camera className="w-3.5 h-3.5 text-[#E8B4A8]" /> Chụp Ảnh Trực Tiếp
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {aiGenerating && (
+                  <div className="py-6 flex flex-col items-center justify-center text-center bg-white/50 rounded-xl border border-stone-100 shadow-inner">
+                    <Loader2 className="w-7 h-7 animate-spin text-[#E8B4A8] mb-2.5" />
+                    <p className="text-xs font-bold text-stone-800">{aiLoadingSteps[aiLoadingStep]}</p>
+                  </div>
+                )}
+
+                {portraitImage && !aiGenerating && (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4 items-center">
+                      <div className="relative rounded-xl overflow-hidden border bg-stone-100 aspect-square w-full">
+                        <img src={portraitImage} alt="" className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => setPortraitImage(null)}
+                          className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/75 text-white hover:bg-black cursor-pointer border-0"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="block text-[10px] font-bold text-stone-550 uppercase tracking-wider">Phong cách</label>
+                        <select
+                          value={aiStyle}
+                          onChange={(e) => setAiStyle(e.target.value)}
+                          className="w-full px-3 py-2 text-xs border rounded-xl bg-white outline-none"
+                        >
+                          <option value="cute-3d">Chibi 3D Đáng Yêu</option>
+                          <option value="disney-pixar">Disney / Pixar 🎬</option>
+                          <option value="anime-romantic">Anime Lãng Mạn 🌸</option>
+                        </select>
+                        <button
+                          type="button"
+                          onClick={handleGenerateChibi}
+                          className="w-full py-2 bg-gradient-to-r from-stone-800 to-stone-950 text-white rounded-xl text-xs font-bold shadow hover:opacity-95 cursor-pointer"
+                        >
+                          ✨ Bắt Đầu Vẽ
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {aiResultUrl && !aiGenerating && (
+                  <div className="space-y-3 p-3 bg-white rounded-xl border border-[#E8B4A8]/30">
+                    <img src={aiResultUrl} alt="" className="w-full rounded-lg max-h-[160px] object-cover" />
+                    <button
+                      type="button"
+                      onClick={handleAddChibiToAlbum}
+                      className="w-full py-2 bg-[#E8B4A8] hover:bg-[#dfa599] text-white rounded-xl text-xs font-bold shadow-md cursor-pointer transition-colors"
+                    >
+                      🎁 Thêm Vào Album Thiệp
+                    </button>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </div>
+
+          {/* 4. Video Section */}
+          <div className="bg-white p-5 rounded-2xl border border-stone-200/60 shadow-sm space-y-4">
+            <h3 className="font-bold text-sm text-stone-800 mb-1 flex items-center gap-2">
+              🎥 Video Đính Kèm {gift.videoUrl && "✅"}
+            </h3>
+            
+            <div className="flex gap-2 p-0.5 bg-stone-100 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setVideoMode("upload")}
+                className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all ${videoMode === "upload" ? "bg-white text-stone-800 shadow-sm" : "text-stone-500 hover:text-stone-700"}`}
+              >
+                Tải Video Lên
+              </button>
+              <button
+                type="button"
+                onClick={() => setVideoMode("youtube")}
+                className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all ${videoMode === "youtube" ? "bg-white text-stone-800 shadow-sm" : "text-stone-500 hover:text-stone-700"}`}
+              >
+                YouTube / Tiktok
+              </button>
+            </div>
+
+            {videoMode === "upload" ? (
+              <div className="flex flex-col items-center justify-center border-2 border-dashed border-stone-200 rounded-xl p-4 bg-stone-50/50">
+                {videoUploading ? (
+                  <div className="flex flex-col items-center gap-2 py-4">
+                    <Loader2 className="w-6 h-6 animate-spin text-[#E8B4A8]" />
+                    <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Đang tải video...</span>
+                  </div>
+                ) : gift.videoUrl && !gift.videoUrl.includes("youtube.com") && !gift.videoUrl.includes("youtu.be") && !gift.videoUrl.includes("tiktok.com") ? (
+                  <div className="w-full space-y-3 text-center">
+                    <video src={gift.videoUrl} controls className="w-full max-h-[140px] rounded-lg bg-black" />
+                    <button
+                      onClick={() => setGift({ ...gift, videoUrl: "" })}
+                      className="text-xs text-rose-500 font-bold hover:underline block mx-auto border-0 bg-transparent cursor-pointer"
+                    >
+                      Xóa Video
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <input
+                      type="file"
+                      ref={videoInputRef}
+                      onChange={handleVideoUpload}
+                      accept="video/*"
+                      style={{ display: "none" }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => videoInputRef.current?.click()}
+                      className="px-4 py-2 border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 text-xs font-bold rounded-xl shadow-sm cursor-pointer transition-colors"
+                    >
+                      Chọn Tệp Video (MP4)
+                    </button>
+                  </>
+                )}
+              </div>
+            ) : (
+              <input
+                type="text"
+                placeholder="Dán link YouTube hoặc Tiktok..."
+                value={gift.videoUrl || ""}
+                onChange={(e) => setGift({ ...gift, videoUrl: e.target.value })}
+                className="w-full px-4 py-2.5 rounded-xl border border-stone-200 outline-none focus:border-[#E8B4A8] text-xs transition-colors"
+              />
+            )}
+          </div>
+
+          {/* 5. Ghi âm Lời chúc */}
+          <div className="bg-white p-5 rounded-2xl border border-stone-200/60 shadow-sm space-y-4">
+            <h3 className="font-bold text-sm text-stone-800 mb-1 flex items-center gap-2">
+              🎙️ Ghi Âm Lời Chúc {gift.voiceUrl && "✅"}
+            </h3>
+            
+            <div className="flex gap-2 p-0.5 bg-stone-100 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setVoiceMode("record")}
+                className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all ${voiceMode === "record" ? "bg-white text-stone-800 shadow-sm" : "text-stone-500 hover:text-stone-700"}`}
+              >
+                Thu Âm Trực Tiếp
+              </button>
+              <button
+                type="button"
+                onClick={() => setVoiceMode("upload")}
+                className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all ${voiceMode === "upload" ? "bg-white text-stone-800 shadow-sm" : "text-stone-500 hover:text-stone-700"}`}
+              >
+                Tải Tệp Âm Thanh
+              </button>
+            </div>
+
+            {voiceMode === "record" ? (
+              <div className="flex flex-col items-center justify-center border-2 border-dashed border-stone-200 rounded-xl p-5 bg-stone-50/50">
+                {voiceUploading ? (
+                  <div className="flex flex-col items-center gap-2 py-2">
+                    <Loader2 className="w-6 h-6 animate-spin text-[#E8B4A8]" />
+                    <span className="text-[10px] text-stone-400 font-bold tracking-wider">Đang tải bản thu...</span>
+                  </div>
+                ) : gift.voiceUrl && !recording ? (
+                  <div className="w-full space-y-3 text-center">
+                    <audio src={gift.voiceUrl} controls className="mx-auto" />
+                    <button
+                      onClick={() => setGift({ ...gift, voiceUrl: "" })}
+                      className="text-xs text-rose-500 font-bold hover:underline block mx-auto border-0 bg-transparent cursor-pointer"
+                    >
+                      Xóa Bản Thu Âm
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={recording ? stopRecording : startRecording}
+                      className={`w-14 h-14 rounded-full flex items-center justify-center transition-all cursor-pointer shadow border-none ${recording ? "bg-red-500 animate-pulse text-white" : "bg-[#E8B4A8]/10 text-[#E8B4A8] border border-[#E8B4A8]/30 hover:bg-[#E8B4A8]/20"}`}
+                    >
+                      {recording ? <Square className="w-5 h-5 fill-white text-white border-0" /> : <Mic className="w-6 h-6" />}
+                    </button>
+                    <span className="text-xs font-bold text-stone-700">
+                      {recording ? `Đang ghi âm... ${formatDuration(recordDuration)}` : "Nhấn để thu âm"}
+                    </span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center border-2 border-dashed border-stone-200 rounded-xl p-4 bg-stone-50/50">
+                {voiceUploading ? (
+                  <div className="flex flex-col items-center gap-2 py-4">
+                    <Loader2 className="w-6 h-6 animate-spin text-[#D4AF78]" />
+                    <span className="text-[10px] text-stone-400 font-bold tracking-wider">Đang tải tệp âm thanh...</span>
+                  </div>
+                ) : gift.voiceUrl ? (
+                  <div className="w-full space-y-3 text-center">
+                    <audio src={gift.voiceUrl} controls className="mx-auto" />
+                    <button
+                      onClick={() => setGift({ ...gift, voiceUrl: "" })}
+                      className="text-xs text-rose-500 font-bold hover:underline block mx-auto border-0 bg-transparent cursor-pointer"
+                    >
+                      Xóa Tệp Âm Thanh
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <input
+                      type="file"
+                      ref={voiceInputRef}
+                      onChange={handleVoiceUpload}
+                      accept="audio/*"
+                      style={{ display: "none" }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => voiceInputRef.current?.click()}
+                      className="px-4 py-2 border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 text-xs font-bold rounded-xl shadow-sm cursor-pointer transition-colors"
+                    >
+                      Chọn Tệp Âm Thanh
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* 6. Nhạc nền */}
           <div className="bg-white p-5 rounded-2xl border border-stone-200/60 shadow-sm">
             <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2.5">
               🎵 Nhạc nền đi kèm
@@ -2002,8 +1819,8 @@ const defaultGift = (orderId: string, orderSignature: string): GiftData => {
   const params = new URLSearchParams(window.location.search);
   const chibiUrl = params.get("chibiUrl");
   return {
-    theme: "sinh-nhat",
-    templateId: "sinh-nhat-premium",
+    theme: "tinh-yeu",
+    templateId: "love-romantic",
     photos: chibiUrl ? [chibiUrl] : [],
     hasVideo: false,
     hasVoice: false,
@@ -2037,7 +1854,7 @@ export function GiftWizard() {
     if (!gift) return false;
     if (step === 0) return Boolean(gift.theme);
     if (step === 1) return Boolean(gift.templateId);
-    if (step === 3)
+    if (step === 2)
       return gift.recipientName.trim() !== "" && gift.message.trim() !== "";
     return true;
   };
@@ -2103,7 +1920,6 @@ export function GiftWizard() {
     <Step0 gift={gift} setGift={setGift} />,
     <Step1 gift={gift} setGift={setGift} />,
     <Step2 gift={gift} setGift={setGift} />,
-    <Step3 gift={gift} setGift={setGift} />,
     <Step4 gift={gift} onSave={handleSave} saving={saving} />,
   ];
 

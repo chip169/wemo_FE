@@ -5,6 +5,7 @@ import { Heart, Music, Play, Pause, Sparkles, Volume2 } from "lucide-react";
 import { BirthdayCanvas3D } from "../components/gift3d/BirthdayCanvas3D";
 import { LoveCanvas3D } from "../components/gift3d/LoveCanvas3D";
 import { GalaxyCanvas3D } from "../components/gift3d/GalaxyCanvas3D";
+import { HeartCanvas3D } from "../components/gift3d/HeartCanvas3D";
 
 const MUSIC_URLS = {
   piano: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
@@ -163,9 +164,9 @@ export function GiftViewPage() {
     <div className="fixed inset-0 w-screen h-screen overflow-hidden select-none">
       {/* 3D Canvas Template selection */}
       {gift.theme === "sinh-nhat" && <BirthdayCanvas3D gift={gift} />}
-      {gift.theme === "tinh-yeu" && <LoveCanvas3D gift={gift} />}
+      {gift.theme === "tinh-yeu" && <HeartCanvas3D gift={gift} />}
       {gift.theme === "ky-niem" && <GalaxyCanvas3D gift={gift} />}
-      {!["sinh-nhat", "tinh-yeu", "ky-niem"].includes(gift.theme) && <LoveCanvas3D gift={gift} />}
+      {!["sinh-nhat", "tinh-yeu", "ky-niem"].includes(gift.theme) && <HeartCanvas3D gift={gift} />}
 
       {/* Interactive Music Widget */}
       {gift.music !== "none" && (

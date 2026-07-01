@@ -11,6 +11,7 @@ import { GiftViewPage } from "./pages/GiftViewPage";
 import { Admin } from "./components/admin/Admin";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { AIChibiPage } from "./pages/AIChibiPage";
+import { HeartDemoPage } from "./pages/HeartDemoPage";
 
 export const router = createBrowserRouter([
   {
@@ -20,6 +21,10 @@ export const router = createBrowserRouter([
   {
     path: "gift/:giftId",
     Component: GiftViewPage,
+  },
+  {
+    path: "demo-thiep",
+    Component: HeartDemoPage,
   },
   {
     path: "admin",
