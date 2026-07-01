@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   Search,
   Eye,
+  Edit2,
   Trash2,
   ChevronLeft,
   ChevronRight,
   Sparkles,
+  X,
 } from "lucide-react";
 import { adminFetch } from "../../utils/api";
 
@@ -29,6 +31,41 @@ export function GiftsPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [editingGift, setEditingGift] = useState<Gift | null>(null);
+  const [editRecipientName, setEditRecipientName] = useState("");
+  const [editOrderId, setEditOrderId] = useState("");
+  const [updating, setUpdating] = useState(false);
+
+  const handleUpdate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingGift) return;
+
+    setUpdating(true);
+    adminFetch(`/api/gifts/${editingGift.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        recipientName: editRecipientName,
+        orderId: editOrderId,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setUpdating(false);
+        if (data.error) {
+          alert(data.error);
+        } else {
+          alert("Đã cập nhật quà tặng thành công.");
+          setEditingGift(null);
+          fetchGifts();
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        setUpdating(false);
+        alert("Lỗi hệ thống khi cập nhật quà tặng.");
+      });
+  };
 
   const fetchGifts = () => {
     setLoading(true);
@@ -285,6 +322,17 @@ export function GiftsPage() {
                               <Eye className="w-4 h-4" />
                             </a>
                             <button
+                              onClick={() => {
+                                setEditingGift(gift);
+                                setEditRecipientName(gift.recipientName);
+                                setEditOrderId(gift.orderId);
+                              }}
+                              className="p-1.5 hover:bg-amber-50 text-amber-600 rounded transition-colors"
+                              title="Chỉnh sửa"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
                               onClick={() => handleDelete(gift.id)}
                               className="p-1.5 hover:bg-rose-50 text-rose-500 rounded transition-colors"
                               title="Xóa"
@@ -351,6 +399,76 @@ export function GiftsPage() {
           </>
         )}
       </div>
+
+      {/* Edit Modal */}
+      <AnimatePresence>
+        {editingGift && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl border border-stone-200 shadow-2xl p-6 w-full max-w-md relative"
+            >
+              <button
+                onClick={() => setEditingGift(null)}
+                className="absolute top-4 right-4 p-1 hover:bg-stone-100 rounded-lg text-stone-400 hover:text-stone-600 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <h3 className="text-base font-bold text-stone-900 mb-4">
+                Chỉnh sửa quà tặng (Mã: {editingGift.id})
+              </h3>
+
+              <form onSubmit={handleUpdate} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-1.5">
+                    Người Nhận
+                  </label>
+                  <input
+                    type="text"
+                    value={editRecipientName}
+                    onChange={(e) => setEditRecipientName(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none focus:border-[#E8B4A8] bg-stone-50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-1.5">
+                    Mã Đơn Hàng (orderId)
+                  </label>
+                  <input
+                    type="text"
+                    value={editOrderId}
+                    onChange={(e) => setEditOrderId(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none focus:border-[#E8B4A8] bg-stone-50"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingGift(null)}
+                    className="flex-1 py-2 text-xs font-bold border border-stone-200 hover:bg-stone-50 text-stone-600 rounded-xl transition-colors cursor-pointer"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={updating}
+                    className="flex-1 py-2 text-xs font-bold bg-[#E8B4A8] hover:opacity-90 text-white rounded-xl transition-colors disabled:opacity-50 cursor-pointer shadow-md"
+                  >
+                    {updating ? "Đang lưu..." : "Lưu thay đổi"}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

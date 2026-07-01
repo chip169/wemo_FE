@@ -348,6 +348,44 @@ app.delete("/api/gifts/:id", authMiddleware, async (req, res) => {
   }
 });
 
+app.put("/api/gifts/:id", authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  const { orderId, recipientName, templateId } = req.body;
+
+  try {
+    if (getDbMode() === "mongodb") {
+      const gift = await Gift.findOne({ id });
+      if (!gift) {
+        return res.status(404).json({ error: "Không tìm thấy quà tặng." });
+      }
+
+      if (orderId !== undefined) gift.orderId = orderId;
+      if (recipientName !== undefined) gift.recipientName = recipientName;
+      if (templateId !== undefined) gift.templateId = templateId;
+
+      await gift.save();
+      res.json({ success: true, gift });
+    } else {
+      const gifts = await getGifts();
+      const giftIndex = gifts.findIndex((g) => g.id === id);
+      if (giftIndex === -1) {
+        return res.status(404).json({ error: "Không tìm thấy quà tặng." });
+      }
+
+      const gift = gifts[giftIndex];
+      if (orderId !== undefined) gift.orderId = orderId;
+      if (recipientName !== undefined) gift.recipientName = recipientName;
+      if (templateId !== undefined) gift.templateId = templateId;
+
+      gifts[giftIndex] = gift;
+      await saveGiftsList(gifts);
+      res.json({ success: true, gift });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 3. Orders Endpoints
 app.get("/api/orders", authMiddleware, async (req, res) => {
   try {
