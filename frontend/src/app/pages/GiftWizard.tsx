@@ -20,6 +20,7 @@ import {
   Sparkles,
   Search,
   Loader2,
+  Camera,
 } from "lucide-react";
 import { Link } from "react-router";
 import confetti from "canvas-confetti";
@@ -631,6 +632,143 @@ function Step2({
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // AI Chibi states
+  const [aiExpanded, setAiExpanded] = useState(false);
+  const [portraitImage, setPortraitImage] = useState<string | null>(null);
+  const [aiStyle, setAiStyle] = useState("cute-3d");
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiResultUrl, setAiResultUrl] = useState<string | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [aiLoadingStep, setAiLoadingStep] = useState(0);
+  const aiLoadingSteps = [
+    "🤖 AI đang phân tích khuôn mặt...",
+    "🎨 Đang phác thảo chibi...",
+    "✨ Đang dệt trang phục...",
+    "💎 Đang dựng hình 3D...",
+    "🎉 Đang hoàn tất..."
+  ];
+
+  useEffect(() => {
+    let interval: any;
+    if (aiGenerating) {
+      setAiLoadingStep(0);
+      interval = setInterval(() => {
+        setAiLoadingStep((prev) => (prev < aiLoadingSteps.length - 1 ? prev + 1 : prev));
+      }, 2500);
+    } else {
+      setAiLoadingStep(0);
+    }
+    return () => clearInterval(interval);
+  }, [aiGenerating]);
+
+  const portraitInputRef = useRef<HTMLInputElement>(null);
+
+  // Camera states inside Step2 widget
+  const [aiShowCamera, setAiShowCamera] = useState(false);
+  const aiVideoRef = useRef<HTMLVideoElement | null>(null);
+  const aiStreamRef = useRef<MediaStream | null>(null);
+
+  const startAiCamera = async () => {
+    setAiShowCamera(true);
+    setAiError(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user" },
+        audio: false
+      });
+      aiStreamRef.current = stream;
+      if (aiVideoRef.current) {
+        aiVideoRef.current.srcObject = stream;
+      }
+    } catch (err: any) {
+      setAiError("Không thể truy cập camera. Vui lòng kiểm tra quyền thiết bị.");
+      setAiShowCamera(false);
+    }
+  };
+
+  const stopAiCamera = () => {
+    if (aiStreamRef.current) {
+      aiStreamRef.current.getTracks().forEach((track) => track.stop());
+      aiStreamRef.current = null;
+    }
+    setAiShowCamera(false);
+  };
+
+  const captureAiPhoto = () => {
+    if (!aiVideoRef.current) return;
+    const video = aiVideoRef.current;
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const base64 = canvas.toDataURL("image/jpeg", 0.8);
+      setPortraitImage(base64);
+      setAiResultUrl(null);
+    }
+    stopAiCamera();
+  };
+
+  // Stop camera stream on unmount
+  useEffect(() => {
+    return () => {
+      if (aiStreamRef.current) {
+        aiStreamRef.current.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, []);
+
+
+  const handlePortraitSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAiError(null);
+    try {
+      const base64 = await compressImage(file);
+      setPortraitImage(base64);
+      setAiResultUrl(null);
+    } catch (err: any) {
+      setAiError(err.message);
+    }
+  };
+
+  const handleGenerateChibi = async () => {
+    if (!portraitImage) return;
+    setAiGenerating(true);
+    setAiError(null);
+    try {
+      const res = await fetch("/api/ai/generate-chibi", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          image: portraitImage,
+          style: aiStyle
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Không thể vẽ ảnh chibi.");
+      setAiResultUrl(data.url);
+    } catch (err: any) {
+      setAiError(err.message);
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
+  const handleAddChibiToAlbum = () => {
+    if (!aiResultUrl) return;
+    if (gift.photos.length >= 3) {
+      alert("Bộ sưu tập ảnh thiệp đã đầy (Tối đa 3 ảnh). Vui lòng xóa bớt ảnh trước khi thêm.");
+      return;
+    }
+    setGift({ ...gift, photos: [...gift.photos, aiResultUrl] });
+    setPortraitImage(null);
+    setAiResultUrl(null);
+    setAiExpanded(false);
+  };
+
+
   // Video States
   const [videoUploading, setVideoUploading] = useState(false);
   const [videoMode, setVideoMode] = useState<"upload" | "youtube">("upload");
@@ -870,6 +1008,199 @@ function Step2({
             </>
           )}
         </div>
+      </div>
+
+      {/* AI Chibi Generator Widget */}
+      <div className="bg-gradient-to-r from-amber-50 to-[#E8B4A8]/10 p-5 rounded-2xl border border-[#E8B4A8]/20 shadow-sm text-left">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4.5 h-4.5 text-[#E8B4A8] fill-[#E8B4A8]/20 animate-pulse" />
+            <h3 className="font-bold text-xs text-stone-800 uppercase tracking-wider">
+              Vẽ Mô Hình Chibi AI (Mới)
+            </h3>
+          </div>
+          <button
+            type="button"
+            onClick={() => setAiExpanded(!aiExpanded)}
+            className="px-3 py-1.5 rounded-xl bg-white border hover:bg-stone-50 text-[10px] font-bold text-stone-750 transition-colors shadow-sm cursor-pointer"
+          >
+            {aiExpanded ? "Đóng Công Cụ" : "Mở Công Cụ ✨"}
+          </button>
+        </div>
+
+        {aiExpanded && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            className="mt-4 pt-4 border-t border-dashed border-stone-200 space-y-4 overflow-hidden"
+          >
+            <p className="text-[11px] text-stone-500 leading-relaxed font-medium">
+              Tải ảnh chân dung của người nhận lên, AI của WEMO sẽ tự động chuyển thành mô hình chibi 3D hoạt hình đáng yêu và chèn thẳng vào thiệp.
+            </p>
+
+            {!portraitImage && !aiGenerating && !aiResultUrl && (
+              <div className="space-y-3">
+                {aiShowCamera ? (
+                  <div className="relative rounded-xl overflow-hidden border bg-black aspect-video flex flex-col justify-between p-3 h-[200px]">
+                    <video
+                      ref={aiVideoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/25 pointer-events-none" />
+                    <div className="z-10 flex justify-between items-start w-full">
+                      <span className="text-[8px] bg-red-650 text-white font-bold px-1.5 py-0.5 rounded-full animate-pulse flex items-center gap-1">
+                        ● CAMERA
+                      </span>
+                    </div>
+                    
+                    <div className="z-10 flex gap-2 justify-center w-full">
+                      <button
+                        type="button"
+                        onClick={stopAiCamera}
+                        className="px-3 py-1.5 rounded-lg bg-stone-900/80 hover:bg-stone-900 text-white text-[9px] font-bold cursor-pointer"
+                      >
+                        Hủy
+                      </button>
+                      <button
+                        type="button"
+                        onClick={captureAiPhoto}
+                        className="px-4 py-1.5 rounded-lg bg-[#E8B4A8] text-white text-[9px] font-black shadow flex items-center gap-1 cursor-pointer"
+                      >
+                        <Camera className="w-3 h-3" /> Chụp
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div
+                      onClick={() => portraitInputRef.current?.click()}
+                      className="border-2 border-dashed border-stone-200 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-white/40 transition-colors bg-white/10"
+                    >
+                      <input
+                        type="file"
+                        ref={portraitInputRef}
+                        onChange={handlePortraitSelect}
+                        accept="image/*"
+                        className="hidden"
+                      />
+                      <Upload className="w-6 h-6 text-stone-400 mb-2" />
+                      <span className="text-[10px] font-bold text-stone-700">Tải ảnh chân dung lên</span>
+                      <span className="text-[8px] text-stone-400 mt-1">Ảnh chân dung đơn, rõ mặt</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={startAiCamera}
+                      className="w-full py-2 bg-white hover:bg-stone-50 border rounded-xl text-[10px] font-bold text-stone-700 flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+                    >
+                      <Camera className="w-3.5 h-3.5 text-[#E8B4A8]" /> Chụp Ảnh Trực Tiếp Từ Camera
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+
+            {aiGenerating && (
+              <div className="py-6 flex flex-col items-center justify-center text-center bg-white/50 rounded-xl border border-stone-100 shadow-inner">
+                <Loader2 className="w-7 h-7 animate-spin text-[#E8B4A8] mb-2.5" />
+                <p className="text-xs font-bold text-stone-800">{aiLoadingSteps[aiLoadingStep]}</p>
+                <p className="text-[9px] text-[#E8B4A8] font-bold animate-pulse uppercase tracking-wider mt-1">Wemo Magic Studio</p>
+              </div>
+            )}
+
+            {portraitImage && !aiGenerating && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4 items-center">
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-bold text-stone-400 uppercase tracking-widest text-center">Ảnh chân dung</p>
+                    <div className="aspect-square rounded-xl overflow-hidden border bg-white flex items-center justify-center">
+                      <img src={portraitImage} className="w-full h-full object-cover" alt="" />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-bold text-[#D4AF78] uppercase tracking-widest text-center">Mô hình chibi AI</p>
+                    <div className="aspect-square rounded-xl overflow-hidden border-2 border-[#D4AF78]/40 bg-white flex items-center justify-center relative">
+                      {aiResultUrl ? (
+                        <img src={aiResultUrl} className="w-full h-full object-cover" alt="" />
+                      ) : (
+                        <div className="text-center p-3 text-[10px] text-stone-400">
+                          <ImageIcon className="w-6 h-6 mx-auto mb-1 stroke-1" />
+                          Chọn phong cách & bấm tạo chibi bên dưới
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {!aiResultUrl && (
+                  <div className="space-y-2">
+                    <label className="block text-[10px] font-black text-stone-600 uppercase tracking-wider">Chọn phong cách</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { id: "cute-3d", label: "Teddy 3D 🧸" },
+                        { id: "anime", label: "Anime 🎨" },
+                        { id: "royal", label: "Hoàng Gia 👑" },
+                        { id: "christmas", label: "Noel 🎄" }
+                      ].map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => setAiStyle(item.id)}
+                          className={`px-3 py-2 rounded-xl text-[10px] font-bold border transition-all text-center cursor-pointer ${
+                            aiStyle === item.id ? "bg-stone-900 border-stone-900 text-white shadow-sm" : "bg-white border-stone-200 text-stone-600 hover:bg-stone-50"
+                          }`}
+                        >
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-2 justify-end pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPortraitImage(null);
+                      setAiResultUrl(null);
+                    }}
+                    className="px-3 py-2 rounded-xl border border-stone-200 hover:bg-stone-50 text-[10px] font-bold text-stone-600 cursor-pointer"
+                  >
+                    Hủy bỏ
+                  </button>
+
+                  {aiResultUrl ? (
+                    <button
+                      type="button"
+                      onClick={handleAddChibiToAlbum}
+                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-stone-800 to-stone-950 text-white text-[10px] font-black shadow flex items-center gap-1.5 cursor-pointer hover:scale-102"
+                    >
+                      <Check className="w-3.5 h-3.5" /> Thêm Vào Thiệp
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleGenerateChibi}
+                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#E8B4A8] to-[#D4AF78] text-white text-[10px] font-black shadow flex items-center gap-1 cursor-pointer hover:scale-102"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 fill-white" /> Vẽ Chibi AI
+                    </button>
+                  )}
+                </div>
+
+                {aiError && (
+                  <p className="text-[10px] text-rose-500 font-bold mt-1 text-left leading-normal">
+                    ⚠️ Lỗi: {aiError}
+                  </p>
+                )}
+              </div>
+            )}
+          </motion.div>
+        )}
       </div>
 
       {/* Toggles grid */}
@@ -1684,19 +2015,23 @@ function SuccessScreen({
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
-const defaultGift = (orderId: string, orderSignature: string): GiftData => ({
-  theme: "sinh-nhat",
-  templateId: "sinh-nhat-premium",
-  photos: [],
-  hasVideo: false,
-  hasVoice: false,
-  recipientName: "",
-  title: "",
-  message: "",
-  music: "none",
-  orderId: orderId,
-  orderSignature: orderSignature,
-});
+const defaultGift = (orderId: string, orderSignature: string): GiftData => {
+  const params = new URLSearchParams(window.location.search);
+  const chibiUrl = params.get("chibiUrl");
+  return {
+    theme: "sinh-nhat",
+    templateId: "sinh-nhat-premium",
+    photos: chibiUrl ? [chibiUrl] : [],
+    hasVideo: false,
+    hasVoice: false,
+    recipientName: "",
+    title: "",
+    message: "",
+    music: "none",
+    orderId: orderId,
+    orderSignature: orderSignature,
+  };
+};
 
 export function GiftWizard() {
   const [validatedOrderId, setValidatedOrderId] = useState<string | null>(null);

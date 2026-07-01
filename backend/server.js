@@ -685,7 +685,225 @@ app.delete("/api/support/sessions/:sessionId", authMiddleware, async (req, res) 
   }
 });
 
+// Helper for HTTPS calls (bypasses Node.js native fetch IPv6 DNS bugs in some environments)
+const fetchImageWithHttps = (url, headers = {}, body = null) => {
+  return new Promise((resolve, reject) => {
+    try {
+      const parsedUrl = new URL(url);
+      const options = {
+        hostname: parsedUrl.hostname,
+        path: parsedUrl.pathname + parsedUrl.search,
+        method: body ? "POST" : "GET",
+        headers: headers,
+        timeout: 30000
+      };
+
+      const req = https.request(options, (res) => {
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          let errText = "";
+          res.on("data", (chunk) => { errText += chunk; });
+          res.on("end", () => {
+            reject(new Error(`HTTP Error ${res.statusCode}: ${errText || res.statusMessage}`));
+          });
+          return;
+        }
+
+        const chunks = [];
+        res.on("data", (chunk) => chunks.push(chunk));
+        res.on("end", () => {
+          resolve(Buffer.concat(chunks));
+        });
+      });
+
+      req.on("error", (err) => reject(err));
+      req.on("timeout", () => {
+        req.destroy();
+        reject(new Error("Request timed out"));
+      });
+
+      if (body) {
+        req.write(typeof body === "string" ? body : JSON.stringify(body));
+      }
+      req.end();
+    } catch (e) {
+      reject(e);
+    }
+  });
+};
+
+// 9. AI Chibi Generator Route
+app.post("/api/ai/generate-chibi", async (req, res) => {
+  try {
+    const { image, style } = req.body;
+    if (!image) {
+      return res.status(400).json({ error: "Thiếu dữ liệu hình ảnh chân dung." });
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    const hfKey = process.env.HF_API_KEY || process.env.HUGGING_FACE_TOKEN;
+
+    if (!apiKey) {
+      return res.status(400).json({ error: "Thiếu cấu hình GEMINI_API_KEY trong tệp .env của server." });
+    }
+
+    const styleNameMap = {
+      "cute-3d": "3D Chibi dễ thương (Pixar style)",
+      "anime": "Anime dễ thương cổ điển",
+      "royal": "Hoàng gia / Công chúa cổ tích",
+      "christmas": "Giáng sinh Noel ấm áp"
+    };
+
+    const chosenStyle = style || "cute-3d";
+
+    // Step 1: Call Gemini Flash to analyze photo and generate prompt (Always Free)
+    const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
+    
+    let stylePromptModifier = "";
+    if (chosenStyle === "cute-3d") {
+      stylePromptModifier = "style should be a cute 3D chibi model, 3D clay rendering, soft lighting, vibrant colors, isolated solid color pastel background, cute anime expression, high quality, Pixar style.";
+    } else if (chosenStyle === "anime") {
+      stylePromptModifier = "style should be a cute anime chibi illustration, detailed lines, soft shading, cute anime expression, vibrant colors, isolated solid color pastel background, professional key art, high quality.";
+    } else if (chosenStyle === "royal") {
+      stylePromptModifier = "style should be a royal chibi model, wearing elegant royal outfit with gold details, crown, cute anime expression, 3D rendering, soft lighting, isolated pastel background, Pixar style.";
+    } else if (chosenStyle === "christmas") {
+      stylePromptModifier = "style should be a Christmas chibi model, wearing Santa hat and cozy winter clothes, cute anime expression, 3D rendering, warm lighting, holiday theme, isolated background, Pixar style.";
+    } else {
+      stylePromptModifier = "style should be a cute 3D chibi model, Pixar style.";
+    }
+
+    const geminiPayload = {
+      contents: [
+        {
+          parts: [
+            {
+              text: `Analyze the person in this image: gender, hair color, hair style, clothing, facial features, accessories, pose. Then write a highly detailed, clean prompt for an image generation AI to generate a cute, 3D chibi version of this person. The ${stylePromptModifier} The prompt should start with 'A cute chibi of' and describe the face, hair, clothing details, on a clean, isolated solid pastel background. Output ONLY the final image generation prompt, do not include any markdown, intro or explanations.`
+            },
+            {
+              inlineData: {
+                mimeType: "image/jpeg",
+                data: base64Data
+              }
+            }
+          ]
+        }
+      ]
+    };
+
+    console.log("🤖 Step 1: Querying Gemini Flash for chibi prompt description...");
+    const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(geminiPayload)
+    });
+
+    if (!geminiRes.ok) {
+      const errText = await geminiRes.text();
+      console.error("❌ Gemini Flash error:", errText);
+      throw new Error(`Gemini Flash API error: ${geminiRes.statusText}`);
+    }
+
+    const geminiJson = await geminiRes.json();
+    const chibiPrompt = geminiJson.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || `A cute 3D chibi model of a person in ${styleNameMap[chosenStyle]} style`;
+    console.log("✅ Generated Prompt:", chibiPrompt);
+
+    let buffer = null;
+    let providerName = "";
+
+    // Step 2: Try to generate the image
+    // Option A: Hugging Face if Key is available
+    if (hfKey && hfKey !== "your_hf_key_here") {
+      try {
+        console.log("🤖 Step 2: Querying Hugging Face (Lykon/dreamshaper-8) for chibi image generation...");
+        providerName = "Hugging Face (Free)";
+        buffer = await fetchImageWithHttps(
+          "https://api-inference.huggingface.co/models/Lykon/dreamshaper-8",
+          {
+            "Authorization": `Bearer ${hfKey}`,
+            "Content-Type": "application/json"
+          },
+          { inputs: chibiPrompt }
+        );
+      } catch (hfErr) {
+        console.warn("⚠️ Hugging Face request failed. Falling back to Pollinations...", hfErr.message);
+        buffer = null; // trigger pollination fallback below
+      }
+    }
+
+    // Option B: Gemini Imagen 4 (if no HF key, or if HF failed)
+    if (!buffer) {
+      try {
+        console.log("🤖 Step 2: Querying Imagen 4 for chibi image generation...");
+        providerName = "Imagen 4 (Paid)";
+        
+        const imagenPayload = {
+          instances: [
+            {
+              prompt: chibiPrompt
+            }
+          ],
+          parameters: {
+            sampleCount: 1,
+            aspectRatio: "1:1",
+            outputMimeType: "image/jpeg"
+          }
+        };
+
+        const imagenRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-fast-generate-001:predict?key=${apiKey}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(imagenPayload)
+        });
+
+        if (imagenRes.ok) {
+          const imagenJson = await imagenRes.json();
+          const imageBytes = imagenJson.predictions?.[0]?.bytesBase64Encoded || imagenJson.predictions?.[0]?.image?.imageBytes;
+          if (imageBytes) {
+            buffer = Buffer.from(imageBytes, "base64");
+          }
+        } else {
+          const errText = await imagenRes.text();
+          console.warn("⚠️ Imagen 4 failed with error. Falling back to Pollinations...", errText);
+        }
+      } catch (imagenErr) {
+        console.warn("⚠️ Imagen 4 failed. Falling back to Pollinations...", imagenErr.message);
+      }
+    }
+
+    // Option C: Pollinations.ai (Always Free Fallback if Imagen 4 / Hugging Face is restricted or fails)
+    if (!buffer) {
+      console.log("🤖 Step 2 (FREE FALLBACK): Querying Pollinations.ai for chibi image generation...");
+      providerName = "Pollinations.ai (Free)";
+      const targetUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(chibiPrompt)}?width=512&height=512&nologo=true&private=true`;
+      buffer = await fetchImageWithHttps(targetUrl);
+    }
+
+    // Save image to uploads folder
+    const uniqueFileName = `chibi-${Date.now()}-${Math.random().toString(36).substring(2, 9)}.jpg`;
+    const filePath = path.join(UPLOADS_DIR, uniqueFileName);
+
+    await fs.promises.writeFile(filePath, buffer);
+
+    const protocol = req.headers["x-forwarded-proto"] || req.protocol;
+    const fileUrl = `${protocol}://${req.get("host")}/uploads/${uniqueFileName}`;
+    console.log(`✅ Successfully generated image using ${providerName} and saved to:`, fileUrl);
+
+    return res.status(201).json({
+      success: true,
+      url: fileUrl,
+      prompt: chibiPrompt,
+      provider: providerName
+    });
+
+  } catch (err) {
+    console.error("❌ AI Generation Failed:", err.message);
+    return res.status(500).json({
+      error: `Quá trình tạo ảnh AI thất bại: ${err.message}`
+    });
+  }
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`📡 Express Server running on port ${PORT}`);
 });
+

@@ -10,6 +10,7 @@ import { GiftWizard } from "./pages/GiftWizard";
 import { GiftViewPage } from "./pages/GiftViewPage";
 import { Admin } from "./components/admin/Admin";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { AIChibiPage } from "./pages/AIChibiPage";
 
 export const router = createBrowserRouter([
   {
@@ -34,6 +35,7 @@ export const router = createBrowserRouter([
       { path: "templates/:slug", Component: TemplateDetailPage },
       { path: "pricing", Component: PricingPage },
       { path: "faq", Component: FAQPage },
+      { path: "ai-chibi", Component: AIChibiPage },
     ],
   },
   {
@@ -41,3 +43,4 @@ export const router = createBrowserRouter([
     Component: NotFoundPage,
   },
 ]);
+
