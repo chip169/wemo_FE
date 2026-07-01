@@ -777,7 +777,13 @@ app.post("/api/ai/generate-chibi", async (req, res) => {
         {
           parts: [
             {
-              text: `Analyze the person in this image: gender, hair color, hair style, clothing, facial features, accessories, pose. Then write a highly detailed, clean prompt for an image generation AI to generate a cute, 3D chibi version of this person. The ${stylePromptModifier} The prompt should start with 'A cute chibi of' and describe the face, hair, clothing details, on a clean, isolated solid pastel background. Output ONLY the final image generation prompt, do not include any markdown, intro or explanations.`
+              text: `Analyze the person in this image: gender, hair color, hair style, clothing, facial features, accessories, pose.
+              
+              Output a JSON object with exactly two fields:
+              1. "enPrompt": A highly detailed, clean prompt in English for an image generation AI to generate a cute chibi version of this person. The ${stylePromptModifier} The prompt should start with 'A cute chibi of' and describe the face, hair, clothing details, on a clean, isolated solid pastel background.
+              2. "viTranslation": A natural, beautiful description and translation of this prompt in Vietnamese for displaying to the user.
+              
+              Respond ONLY with the JSON object, no markdown formatting (like \`\`\`json), no introductory or explanations text.`
             },
             {
               inlineData: {
@@ -791,7 +797,8 @@ app.post("/api/ai/generate-chibi", async (req, res) => {
     };
 
     console.log("🤖 Step 1: Querying Gemini Flash for chibi prompt description...");
-    let chibiPrompt = "";
+    let chibiPromptEn = "";
+    let chibiPromptVi = "";
     let geminiSuccess = false;
 
     try {
@@ -812,10 +819,35 @@ app.post("/api/ai/generate-chibi", async (req, res) => {
 
       if (geminiRes.ok) {
         const geminiJson = await geminiRes.json();
-        chibiPrompt = geminiJson.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
-        if (chibiPrompt) {
+        const rawText = geminiJson.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+        
+        let parsed = null;
+        try {
+          const jsonText = rawText.replace(/```json/gi, "").replace(/```/gi, "").trim();
+          parsed = JSON.parse(jsonText);
+        } catch (e) {
+          console.warn("⚠️ JSON.parse failed on cleaned text, trying regex match...", e.message);
+          const match = rawText.match(/\{[\s\S]*\}/);
+          if (match) {
+            try {
+              parsed = JSON.parse(match[0]);
+            } catch (innerE) {
+              console.warn("⚠️ JSON.parse failed on regex match.");
+            }
+          }
+        }
+
+        if (parsed && parsed.enPrompt) {
+          chibiPromptEn = parsed.enPrompt;
+          chibiPromptVi = parsed.viTranslation || parsed.viDescription || chibiPromptEn;
           geminiSuccess = true;
-          console.log("✅ Gemini Generated Prompt successfully:", chibiPrompt);
+          console.log("✅ Gemini Generated Prompt successfully!");
+          console.log("   - EN:", chibiPromptEn);
+          console.log("   - VI:", chibiPromptVi);
+        } else if (rawText) {
+          chibiPromptEn = rawText;
+          chibiPromptVi = rawText;
+          geminiSuccess = true;
         }
       } else {
         const errText = await geminiRes.text();
@@ -827,8 +859,16 @@ app.post("/api/ai/generate-chibi", async (req, res) => {
 
     // Fallback prompt if Gemini is completely down/overloaded
     if (!geminiSuccess) {
-      chibiPrompt = `A cute chibi version of the person, ${styleNameMap[chosenStyle]} style, detailed clothing, vibrant colors, isolated solid pastel background, high quality.`;
-      console.log("⚠️ Using default fallback prompt:", chibiPrompt);
+      chibiPromptEn = `A cute chibi version of the person, ${styleNameMap[chosenStyle]} style, detailed clothing, vibrant colors, isolated solid pastel background, high quality.`;
+      
+      const styleNameMapVi = {
+        "cute-3d": "mô hình chibi đất sét 3D dễ thương phong cách hoạt hình Pixar",
+        "anime": "hình chibi vẽ phong cách anime Nhật Bản dễ thương sắc sảo",
+        "royal": "hình chibi phong cách hoàng gia sang trọng",
+        "christmas": "hình chibi chủ đề Giáng sinh Noel ấm áp"
+      };
+      chibiPromptVi = `Một mô hình chibi dễ thương của người trong ảnh, phong cách ${styleNameMapVi[chosenStyle] || "chibi dễ thương"}, quần áo chi tiết, màu sắc tươi sáng, nền pastel đơn sắc, chất lượng cao.`;
+      console.log("⚠️ Using default fallback prompt:", chibiPromptEn);
     }
 
     let buffer = null;
@@ -846,7 +886,7 @@ app.post("/api/ai/generate-chibi", async (req, res) => {
             "Authorization": `Bearer ${hfKey}`,
             "Content-Type": "application/json"
           },
-          { inputs: chibiPrompt }
+          { inputs: chibiPromptEn }
         );
       } catch (hfErr) {
         console.warn("⚠️ Hugging Face request failed. Falling back to Pollinations...", hfErr.message);
@@ -863,7 +903,7 @@ app.post("/api/ai/generate-chibi", async (req, res) => {
         const imagenPayload = {
           instances: [
             {
-              prompt: chibiPrompt
+              prompt: chibiPromptEn
             }
           ],
           parameters: {
@@ -898,7 +938,7 @@ app.post("/api/ai/generate-chibi", async (req, res) => {
     if (!buffer) {
       console.log("🤖 Step 2 (FREE FALLBACK): Querying Pollinations.ai for chibi image generation...");
       providerName = "Pollinations.ai (Free)";
-      const targetUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(chibiPrompt)}?width=512&height=512&nologo=true&private=true`;
+      const targetUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(chibiPromptEn)}?width=512&height=512&nologo=true&private=true`;
       buffer = await fetchImageWithHttps(targetUrl);
     }
 
@@ -915,7 +955,7 @@ app.post("/api/ai/generate-chibi", async (req, res) => {
     return res.status(201).json({
       success: true,
       url: fileUrl,
-      prompt: chibiPrompt,
+      prompt: chibiPromptVi,
       provider: providerName
     });
 
