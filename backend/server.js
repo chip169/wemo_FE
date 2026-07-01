@@ -265,21 +265,21 @@ app.get("/api/gifts/:id", async (req, res) => {
     if (getDbMode() === "mongodb") {
       const gift = await Gift.findOne({ id });
       if (!gift) return res.status(404).json({ error: "Không tìm thấy quà tặng." });
-      
+
       // Increment views
       gift.views += 1;
       await gift.save();
-      
+
       res.json(gift);
     } else {
       const gifts = await getGifts();
       const giftIndex = gifts.findIndex((g) => g.id === id);
       if (giftIndex === -1) return res.status(404).json({ error: "Không tìm thấy quà tặng." });
-      
+
       // Increment views
       gifts[giftIndex].views = (gifts[giftIndex].views || 0) + 1;
       await saveGiftsList(gifts);
-      
+
       res.json(gifts[giftIndex]);
     }
   } catch (err) {
@@ -757,7 +757,7 @@ app.post("/api/ai/generate-chibi", async (req, res) => {
 
     // Step 1: Call Gemini Flash to analyze photo and generate prompt (Always Free)
     const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
-    
+
     let stylePromptModifier = "";
     if (chosenStyle === "cute-3d") {
       stylePromptModifier = "style should be a cute 3D chibi model, 3D clay rendering, soft lighting, vibrant colors, isolated solid color pastel background, cute anime expression, high quality, Pixar style.";
@@ -834,7 +834,7 @@ app.post("/api/ai/generate-chibi", async (req, res) => {
       try {
         console.log("🤖 Step 2: Querying Imagen 4 for chibi image generation...");
         providerName = "Imagen 4 (Paid)";
-        
+
         const imagenPayload = {
           instances: [
             {
