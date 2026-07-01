@@ -2,7 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
 import { Heart, Music, Play, Pause, Sparkles, Volume2 } from "lucide-react";
-import { RenderLiveTemplate } from "./GiftWizard";
+import { BirthdayCanvas3D } from "../components/gift3d/BirthdayCanvas3D";
+import { LoveCanvas3D } from "../components/gift3d/LoveCanvas3D";
+import { GalaxyCanvas3D } from "../components/gift3d/GalaxyCanvas3D";
 
 const MUSIC_URLS = {
   piano: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
@@ -157,61 +159,30 @@ export function GiftViewPage() {
     );
   }
 
-  // Define particle colors based on template/theme
-  const particleColors =
-    gift.theme === "sinh-nhat"
-      ? ["#FF6B8A", "#FFD4D4", "#FF9A9E", "#FECFEF", "#FFE066"]
-      : gift.theme === "tinh-yeu"
-        ? ["#FF4D4D", "#FFA3A3", "#FFEBEB", "#FFC1C1", "#FFF0F0"]
-        : gift.theme === "giang-sinh"
-          ? ["#FFFFFF", "#2D5016", "#D4AF78", "#FF4444", "#4A7C2F"]
-          : ["#8B7355", "#D4C4A8", "#C4B498", "#E6DFD5", "#FAF7F4"];
-
   return (
-    <div className="min-h-screen w-full bg-[#FAF8F5] relative flex flex-col items-center justify-start py-8 px-4 md:py-12">
-      {/* Background Particles */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {Array.from({ length: 20 }).map((_, i) => (
-          <FloatingParticle
-            key={i}
-            color={particleColors[i % particleColors.length]}
-            delay={i * 0.4}
-          />
-        ))}
-      </div>
+    <div className="fixed inset-0 w-screen h-screen overflow-hidden select-none">
+      {/* 3D Canvas Template selection */}
+      {gift.theme === "sinh-nhat" && <BirthdayCanvas3D gift={gift} />}
+      {gift.theme === "tinh-yeu" && <LoveCanvas3D gift={gift} />}
+      {gift.theme === "ky-niem" && <GalaxyCanvas3D gift={gift} />}
+      {!["sinh-nhat", "tinh-yeu", "ky-niem"].includes(gift.theme) && <LoveCanvas3D gift={gift} />}
 
       {/* Interactive Music Widget */}
       {gift.music !== "none" && (
-        <div className="absolute top-4 right-4 z-20">
+        <div className="absolute top-4 right-4 z-30 pointer-events-auto">
           <button
             onClick={() => setIsPlayingMusic(!isPlayingMusic)}
-            className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md border bg-white text-stone-700 transition-all ${isPlayingMusic ? "border-orange-200 text-[#E8B4A8] scale-105 animate-pulse" : "border-stone-200"}`}
+            className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg border bg-white/80 backdrop-blur-sm text-stone-700 transition-all ${isPlayingMusic ? "border-rose-200 text-rose-500 scale-105 animate-pulse" : "border-stone-200"}`}
           >
-            {isPlayingMusic ? <Volume2 className="w-5 h-5" /> : <Music className="w-5 h-5 text-stone-400" />}
+            {isPlayingMusic ? <Volume2 className="w-5 h-5 animate-spin" style={{ animationDuration: "8s" }} /> : <Music className="w-5 h-5 text-stone-400" />}
           </button>
           {isPlayingMusic && (
-            <div className="absolute top-12 right-0 bg-stone-900 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow whitespace-nowrap">
-              Đang phát nhạc nền...
+            <div className="absolute top-12 right-0 bg-stone-900/90 backdrop-blur-sm text-white text-[9px] font-bold px-2 py-0.5 rounded shadow whitespace-nowrap pointer-events-none">
+              Đang phát nhạc...
             </div>
           )}
         </div>
       )}
-
-      {/* Main card viewport - clean responsive container instead of phone chassis */}
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="w-full max-w-md rounded-3xl overflow-hidden shadow-2xl border border-stone-200/60 bg-white"
-      >
-        <RenderLiveTemplate gift={gift} isEditing={false} />
-      </motion.div>
-
-      {/* Info bottom */}
-      <p className="mt-5 text-[10px] text-stone-400 font-medium uppercase tracking-widest flex items-center gap-1">
-        <span>Thiệp được tạo bởi</span>
-        <span className="font-bold text-stone-500">WEMO NFC</span>
-      </p>
     </div>
   );
 }
