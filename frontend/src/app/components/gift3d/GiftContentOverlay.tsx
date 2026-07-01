@@ -282,6 +282,7 @@ export function GiftContentOverlay({ gift, themeStyle }: GiftContentOverlayProps
             >
               <Heart className="w-7 h-7 text-white fill-white animate-pulse" />
             </motion.button>
+          </div>
         </motion.div>
 
         {/* Info bottom */}
