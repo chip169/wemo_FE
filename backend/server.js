@@ -790,21 +790,45 @@ app.post("/api/ai/generate-chibi", async (req, res) => {
     };
 
     console.log("🤖 Step 1: Querying Gemini Flash for chibi prompt description...");
-    const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(geminiPayload)
-    });
+    let chibiPrompt = "";
+    let geminiSuccess = false;
 
-    if (!geminiRes.ok) {
-      const errText = await geminiRes.text();
-      console.error("❌ Gemini Flash error:", errText);
-      throw new Error(`Gemini Flash API error: ${geminiRes.statusText}`);
+    try {
+      let geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(geminiPayload)
+      });
+
+      if (!geminiRes.ok) {
+        console.warn(`⚠️ gemini-2.5-flash failed with status ${geminiRes.status}. Retrying with gemini-1.5-flash...`);
+        geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(geminiPayload)
+        });
+      }
+
+      if (geminiRes.ok) {
+        const geminiJson = await geminiRes.json();
+        chibiPrompt = geminiJson.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+        if (chibiPrompt) {
+          geminiSuccess = true;
+          console.log("✅ Gemini Generated Prompt successfully:", chibiPrompt);
+        }
+      } else {
+        const errText = await geminiRes.text();
+        console.error("❌ Both Gemini 2.5 and 1.5 Flash failed:", errText);
+      }
+    } catch (geminiErr) {
+      console.error("❌ Gemini API query encountered error:", geminiErr.message);
     }
 
-    const geminiJson = await geminiRes.json();
-    const chibiPrompt = geminiJson.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || `A cute 3D chibi model of a person in ${styleNameMap[chosenStyle]} style`;
-    console.log("✅ Generated Prompt:", chibiPrompt);
+    // Fallback prompt if Gemini is completely down/overloaded
+    if (!geminiSuccess) {
+      chibiPrompt = `A cute chibi version of the person, ${styleNameMap[chosenStyle]} style, detailed clothing, vibrant colors, isolated solid pastel background, high quality.`;
+      console.log("⚠️ Using default fallback prompt:", chibiPrompt);
+    }
 
     let buffer = null;
     let providerName = "";
