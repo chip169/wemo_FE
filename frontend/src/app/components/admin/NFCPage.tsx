@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   Search,
   Wifi,
@@ -7,6 +7,9 @@ import {
   Clock,
   Trash2,
   Sparkles,
+  Plus,
+  X,
+  Loader2,
 } from "lucide-react";
 import { adminFetch } from "../../utils/api";
 
@@ -45,6 +48,13 @@ export function NFCPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
+  // Create Modal state
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [formUid, setFormUid] = useState("");
+  const [formStatus, setFormStatus] = useState<"unassigned" | "assigned" | "inactive">("unassigned");
+  const [formGiftId, setFormGiftId] = useState("");
+  const [creating, setCreating] = useState(false);
+
   const fetchNFCTags = () => {
     setLoading(true);
     adminFetch("/api/nfc")
@@ -62,6 +72,42 @@ export function NFCPage() {
   useEffect(() => {
     fetchNFCTags();
   }, []);
+
+  const handleCreate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formUid.trim()) return;
+
+    setCreating(true);
+    const body = {
+      uid: formUid.trim(),
+      status: formStatus,
+      giftId: formGiftId.trim(),
+    };
+
+    adminFetch("/api/nfc", {
+      method: "POST",
+      body: JSON.stringify(body),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setCreating(false);
+        if (data.error) {
+          alert(data.error);
+        } else {
+          alert(`Đã thêm thẻ NFC thành công (ID: ${data.id})`);
+          setIsCreateOpen(false);
+          setFormUid("");
+          setFormGiftId("");
+          setFormStatus("unassigned");
+          fetchNFCTags();
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        setCreating(false);
+        alert("Lỗi hệ thống khi thêm thẻ NFC.");
+      });
+  };
 
   const handleDelete = (id: string) => {
     if (window.confirm(`Bạn có chắc chắn muốn xóa chip NFC ${id}?`)) {
@@ -94,13 +140,28 @@ export function NFCPage() {
   return (
     <div className="space-y-6">
       {/* Page header */}
-      <div>
-        <h1 style={{ fontSize: "1.875rem", fontWeight: 700, color: "#111827" }}>
-          Quản lý Thẻ NFC
-        </h1>
-        <p style={{ fontSize: "0.875rem", color: "#6B7280", marginTop: "4px" }}>
-          Quản lý và theo dõi thông tin thẻ chip NFC
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 style={{ fontSize: "1.875rem", fontWeight: 700, color: "#111827" }}>
+            Quản lý Thẻ NFC
+          </h1>
+          <p style={{ fontSize: "0.875rem", color: "#6B7280", marginTop: "4px" }}>
+            Quản lý và theo dõi thông tin thẻ chip NFC
+          </p>
+        </div>
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => setIsCreateOpen(true)}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl cursor-pointer shadow border-0 text-white"
+          style={{
+            background: "#E8B4A8",
+            fontWeight: 600,
+          }}
+        >
+          <Plus className="w-4 h-4" />
+          Thêm thẻ NFC
+        </motion.button>
       </div>
 
       {/* Stats */}
@@ -122,22 +183,10 @@ export function NFCPage() {
               border: "1px solid #E5E7EB",
             }}
           >
-            <div
-              style={{
-                fontSize: "0.75rem",
-                color: "#6B7280",
-                marginBottom: "8px",
-              }}
-            >
+            <div style={{ fontSize: "0.75rem", color: "#6B7280", marginBottom: "8px" }}>
               {stat.label}
             </div>
-            <div
-              style={{
-                fontSize: "1.75rem",
-                fontWeight: 700,
-                color: stat.color,
-              }}
-            >
+            <div style={{ fontSize: "1.75rem", fontWeight: 700, color: stat.color }}>
               {stat.value}
             </div>
           </motion.div>
@@ -173,7 +222,7 @@ export function NFCPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 rounded-lg outline-none text-xs bg-stone-50 text-stone-700 font-semibold"
+            className="px-4 py-2 rounded-lg outline-none text-xs bg-stone-50 text-stone-700 font-semibold cursor-pointer"
             style={{
               border: "1px solid #E5E7EB",
             }}
@@ -213,34 +262,22 @@ export function NFCPage() {
                 }}
               >
                 <tr>
-                  <th
-                    className="px-6 py-4 text-left text-[10px] font-bold text-[#6B7280] uppercase tracking-wider"
-                  >
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-[#6B7280] uppercase tracking-wider">
                     Mã thẻ NFC
                   </th>
-                  <th
-                    className="px-6 py-4 text-left text-[10px] font-bold text-[#6B7280] uppercase tracking-wider"
-                  >
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-[#6B7280] uppercase tracking-wider">
                     UID Thẻ NFC
                   </th>
-                  <th
-                    className="px-6 py-4 text-left text-[10px] font-bold text-[#6B7280] uppercase tracking-wider"
-                  >
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-[#6B7280] uppercase tracking-wider">
                     Mã Quà Liên Kết
                   </th>
-                  <th
-                    className="px-6 py-4 text-left text-[10px] font-bold text-[#6B7280] uppercase tracking-wider"
-                  >
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-[#6B7280] uppercase tracking-wider">
                     Trạng Thái
                   </th>
-                  <th
-                    className="px-6 py-4 text-left text-[10px] font-bold text-[#6B7280] uppercase tracking-wider"
-                  >
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-[#6B7280] uppercase tracking-wider">
                     Lần Chạm Cuối
                   </th>
-                  <th
-                    className="px-6 py-4 text-left text-[10px] font-bold text-[#6B7280] uppercase tracking-wider"
-                  >
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-[#6B7280] uppercase tracking-wider">
                     Hành Động
                   </th>
                 </tr>
@@ -262,17 +299,8 @@ export function NFCPage() {
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <Wifi
-                            className="w-4 h-4"
-                            style={{ color: "#E8B4A8" }}
-                          />
-                          <span
-                            style={{
-                              fontSize: "0.75rem",
-                              fontWeight: 600,
-                              color: "#111827",
-                            }}
-                          >
+                          <Wifi className="w-4 h-4" style={{ color: "#E8B4A8" }} />
+                          <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "#111827" }}>
                             {tag.id}
                           </span>
                         </div>
@@ -291,9 +319,7 @@ export function NFCPage() {
                             {tag.giftId}
                           </span>
                         ) : (
-                          <span className="text-xs text-stone-400">
-                            Chưa liên kết
-                          </span>
+                          <span className="text-xs text-stone-400">Chưa liên kết</span>
                         )}
                       </td>
                       <td className="px-6 py-4">
@@ -316,7 +342,7 @@ export function NFCPage() {
                       <td className="px-6 py-4">
                         <button
                           onClick={() => handleDelete(tag.id)}
-                          className="p-1.5 hover:bg-rose-50 text-rose-500 rounded transition-colors"
+                          className="p-1.5 hover:bg-rose-50 text-rose-500 rounded transition-colors cursor-pointer border-0 bg-transparent"
                           title="Xóa thẻ"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -330,6 +356,93 @@ export function NFCPage() {
           </div>
         )}
       </div>
+
+      {/* Create NFC Modal */}
+      <AnimatePresence>
+        {isCreateOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/45 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl border border-stone-200 shadow-2xl p-6 w-full max-w-md relative"
+            >
+              <button
+                onClick={() => setIsCreateOpen(false)}
+                className="absolute top-4 right-4 p-1 hover:bg-stone-100 rounded-lg text-stone-400 hover:text-stone-600 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <h3 className="text-base font-bold text-stone-900 mb-4 flex items-center gap-2">
+                <Plus className="w-5 h-5 text-[#E8B4A8]" />
+                Thêm thẻ NFC mới
+              </h3>
+
+              <form onSubmit={handleCreate} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-stone-550 uppercase tracking-wider mb-1.5">
+                    Mã UID phần cứng thẻ *
+                  </label>
+                  <input
+                    type="text"
+                    value={formUid}
+                    onChange={(e) => setFormUid(e.target.value)}
+                    required
+                    placeholder="Ví dụ: 04:A1:B2:C3:D4:E5:F6"
+                    className="w-full px-3 py-2 text-xs border border-stone-200 rounded-lg focus:outline-none focus:border-[#E8B4A8] bg-stone-50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-stone-550 uppercase tracking-wider mb-1.5">
+                    Trạng thái ban đầu *
+                  </label>
+                  <select
+                    value={formStatus}
+                    onChange={(e) => setFormStatus(e.target.value as any)}
+                    className="w-full px-3 py-2 text-xs border border-stone-200 rounded-lg focus:outline-none focus:border-[#E8B4A8] bg-stone-50"
+                  >
+                    <option value="unassigned">Có sẵn (unassigned)</option>
+                    <option value="assigned">Đã gán (assigned)</option>
+                    <option value="inactive">Vô hiệu hóa (inactive)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-stone-550 uppercase tracking-wider mb-1.5">
+                    Mã quà tặng liên kết (Tùy chọn)
+                  </label>
+                  <input
+                    type="text"
+                    value={formGiftId}
+                    onChange={(e) => setFormGiftId(e.target.value)}
+                    placeholder="Nhập giftId nếu đã gán quà"
+                    className="w-full px-3 py-2 text-xs border border-stone-200 rounded-lg focus:outline-none focus:border-[#E8B4A8] bg-stone-50"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsCreateOpen(false)}
+                    className="flex-1 py-2 text-xs font-bold border border-stone-200 hover:bg-stone-50 text-stone-600 rounded-xl transition-colors cursor-pointer"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={creating}
+                    className="flex-1 py-2 text-xs font-bold bg-[#E8B4A8] hover:opacity-90 text-white rounded-xl transition-colors disabled:opacity-50 cursor-pointer shadow-md"
+                  >
+                    {creating ? "Đang thêm..." : "Thêm thẻ"}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
