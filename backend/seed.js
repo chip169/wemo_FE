@@ -160,18 +160,31 @@ const seedMongo = async () => {
     const Admin = require("./models/Admin");
     const { hashPassword } = require("./utils/auth");
 
+    const Template = require("./models/Template");
     // Clean existing tables
     await Gift.deleteMany({});
     await Order.deleteMany({});
     await NFC.deleteMany({});
     await Message.deleteMany({});
     await Admin.deleteMany({});
+    await Template.deleteMany({});
 
     // Insert seeds
     await Order.insertMany(mockOrders);
     await Gift.insertMany(mockGifts);
     await NFC.insertMany(mockNFC);
     await Message.insertMany(mockMessages);
+    await Template.insertMany([
+      {
+        id: "love-romantic",
+        name: "Mãi Yêu Thương (Trái Tim 3D)",
+        category: "romance",
+        categoryLabel: "Tình yêu & Lãng mạn",
+        usageCount: 378,
+        status: "active",
+        preview: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=400&q=80",
+      }
+    ]);
     
     await Admin.create({
       username: "admin",
