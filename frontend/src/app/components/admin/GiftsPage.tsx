@@ -1,14 +1,13 @@
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 import {
   Search,
   Eye,
-  Edit2,
   Trash2,
   ChevronLeft,
   ChevronRight,
   Sparkles,
-  X,
+  RefreshCw,
 } from "lucide-react";
 import { adminFetch } from "../../utils/api";
 
@@ -18,12 +17,15 @@ interface Gift {
   templateId: string;
   orderId: string;
   views: number;
+  status: string;
   createdAt: string;
+  isPlaceholder?: boolean;
 }
 
 const statusColors = {
   published: { bg: "#DCFCE7", text: "#16A34A", label: "Đã tạo thiệp" },
   uncreated: { bg: "#FEF3C7", text: "#D97706", label: "Chưa tạo thiệp" },
+  deleted: { bg: "#FEE2E2", text: "#DC2626", label: "Đã xóa mềm" },
 };
 
 export function GiftsPage() {
@@ -31,41 +33,6 @@ export function GiftsPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [editingGift, setEditingGift] = useState<Gift | null>(null);
-  const [editRecipientName, setEditRecipientName] = useState("");
-  const [editOrderId, setEditOrderId] = useState("");
-  const [updating, setUpdating] = useState(false);
-
-  const handleUpdate = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingGift) return;
-
-    setUpdating(true);
-    adminFetch(`/api/gifts/${editingGift.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        recipientName: editRecipientName,
-        orderId: editOrderId,
-      }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        setUpdating(false);
-        if (data.error) {
-          alert(data.error);
-        } else {
-          alert("Đã cập nhật quà tặng thành công.");
-          setEditingGift(null);
-          fetchGifts();
-        }
-      })
-      .catch((err) => {
-        console.error(err);
-        setUpdating(false);
-        alert("Lỗi hệ thống khi cập nhật quà tặng.");
-      });
-  };
 
   const fetchGifts = () => {
     setLoading(true);
@@ -77,8 +44,13 @@ export function GiftsPage() {
         const giftsList = Array.isArray(giftsData) ? giftsData : [];
         const ordersList = Array.isArray(ordersData) ? ordersData : [];
 
-        // Build map of orderIds that have created gifts
-        const createdOrderIds = new Set(giftsList.map((g: any) => g.orderId).filter(Boolean));
+        // Build map of orderIds that have created active gifts
+        const createdOrderIds = new Set(
+          giftsList
+            .filter((g: any) => g.status !== "deleted")
+            .map((g: any) => g.orderId)
+            .filter(Boolean)
+        );
 
         // Filter orders that don't have created gifts yet
         const uncreatedGifts = ordersList
@@ -89,11 +61,11 @@ export function GiftsPage() {
             templateId: "-",
             orderId: o.id,
             views: 0,
+            status: "uncreated",
             createdAt: o.createdDate || "",
             isPlaceholder: true,
           }));
 
-        // Combine both
         const combined = [...giftsList, ...uncreatedGifts];
         setGifts(combined);
         setLoading(false);
@@ -109,14 +81,37 @@ export function GiftsPage() {
   }, []);
 
   const handleDelete = (id: string) => {
-    if (window.confirm(`Bạn có chắc chắn muốn xóa món quà ${id}?`)) {
+    if (window.confirm(`Bạn có chắc chắn muốn xóa mềm món quà ${id}?`)) {
       adminFetch(`/api/gifts/${id}`, { method: "DELETE" })
         .then((res) => res.json())
         .then((data) => {
-          alert(data.message || "Đã xóa thành công.");
+          alert(data.message || "Đã xóa mềm thành công.");
           fetchGifts();
         })
         .catch(console.error);
+    }
+  };
+
+  const handleRestore = (id: string) => {
+    if (window.confirm(`Khôi phục lại quà tặng ${id}?`)) {
+      adminFetch(`/api/gifts/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "active" }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.error) {
+            alert(data.error);
+          } else {
+            alert("Đã khôi phục quà tặng thành công.");
+            fetchGifts();
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          alert("Lỗi hệ thống khi khôi phục quà tặng.");
+        });
     }
   };
 
@@ -143,15 +138,11 @@ export function GiftsPage() {
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1
-            style={{ fontSize: "1.875rem", fontWeight: 700, color: "#111827" }}
-          >
+          <h1 style={{ fontSize: "1.875rem", fontWeight: 700, color: "#111827" }}>
             Quản lý Quà tặng
           </h1>
-          <p
-            style={{ fontSize: "0.875rem", color: "#6B7280", marginTop: "4px" }}
-          >
-            Quản lý và theo dõi toàn bộ quà tặng điện tử
+          <p style={{ fontSize: "0.875rem", color: "#6B7280", marginTop: "4px" }}>
+            Quản lý, xóa mềm và theo dõi toàn bộ quà tặng điện tử
           </p>
         </div>
       </div>
@@ -214,44 +205,28 @@ export function GiftsPage() {
                   }}
                 >
                   <tr>
-                    <th
-                      className="px-6 py-4 text-left text-[10px] font-bold text-[#6B7280] uppercase tracking-wider"
-                    >
+                    <th className="px-6 py-4 text-left text-[10px] font-bold text-[#6B7280] uppercase tracking-wider">
                       Mã quà tặng
                     </th>
-                    <th
-                      className="px-6 py-4 text-left text-[10px] font-bold text-[#6B7280] uppercase tracking-wider"
-                    >
+                    <th className="px-6 py-4 text-left text-[10px] font-bold text-[#6B7280] uppercase tracking-wider">
                       Người Nhận
                     </th>
-                    <th
-                      className="px-6 py-4 text-left text-[10px] font-bold text-[#6B7280] uppercase tracking-wider"
-                    >
+                    <th className="px-6 py-4 text-left text-[10px] font-bold text-[#6B7280] uppercase tracking-wider">
                       Mã Đơn Hàng
                     </th>
-                    <th
-                      className="px-6 py-4 text-left text-[10px] font-bold text-[#6B7280] uppercase tracking-wider"
-                    >
+                    <th className="px-6 py-4 text-left text-[10px] font-bold text-[#6B7280] uppercase tracking-wider">
                       Mẫu Thiệp
                     </th>
-                    <th
-                      className="px-6 py-4 text-left text-[10px] font-bold text-[#6B7280] uppercase tracking-wider"
-                    >
+                    <th className="px-6 py-4 text-left text-[10px] font-bold text-[#6B7280] uppercase tracking-wider">
                       Trạng Thái
                     </th>
-                    <th
-                      className="px-6 py-4 text-left text-[10px] font-bold text-[#6B7280] uppercase tracking-wider"
-                    >
+                    <th className="px-6 py-4 text-left text-[10px] font-bold text-[#6B7280] uppercase tracking-wider">
                       Ngày Tạo
                     </th>
-                    <th
-                      className="px-6 py-4 text-left text-[10px] font-bold text-[#6B7280] uppercase tracking-wider"
-                    >
+                    <th className="px-6 py-4 text-left text-[10px] font-bold text-[#6B7280] uppercase tracking-wider">
                       Lượt Xem
                     </th>
-                    <th
-                      className="px-6 py-4 text-left text-[10px] font-bold text-[#6B7280] uppercase tracking-wider"
-                    >
+                    <th className="px-6 py-4 text-left text-[10px] font-bold text-[#6B7280] uppercase tracking-wider">
                       Hành Động
                     </th>
                   </tr>
@@ -292,11 +267,23 @@ export function GiftsPage() {
                         <span
                           className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold"
                           style={{
-                            background: gift.isPlaceholder ? statusColors.uncreated.bg : statusColors.published.bg,
-                            color: gift.isPlaceholder ? statusColors.uncreated.text : statusColors.published.text,
+                            background: gift.status === "deleted"
+                              ? statusColors.deleted.bg
+                              : gift.isPlaceholder
+                                ? statusColors.uncreated.bg
+                                : statusColors.published.bg,
+                            color: gift.status === "deleted"
+                              ? statusColors.deleted.text
+                              : gift.isPlaceholder
+                                ? statusColors.uncreated.text
+                                : statusColors.published.text,
                           }}
                         >
-                          {gift.isPlaceholder ? statusColors.uncreated.label : statusColors.published.label}
+                          {gift.status === "deleted"
+                            ? statusColors.deleted.label
+                            : gift.isPlaceholder
+                              ? statusColors.uncreated.label
+                              : statusColors.published.label}
                         </span>
                       </td>
                       <td className="px-6 py-4">
@@ -312,33 +299,34 @@ export function GiftsPage() {
                       <td className="px-6 py-4">
                         {!gift.isPlaceholder ? (
                           <div className="flex items-center gap-2">
-                            <a
-                              href={`/gift/${gift.id}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="p-1.5 hover:bg-stone-100 rounded text-stone-600 transition-colors"
-                              title="Xem chi tiết"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </a>
-                            <button
-                              onClick={() => {
-                                setEditingGift(gift);
-                                setEditRecipientName(gift.recipientName);
-                                setEditOrderId(gift.orderId);
-                              }}
-                              className="p-1.5 hover:bg-amber-50 text-amber-600 rounded transition-colors"
-                              title="Chỉnh sửa"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(gift.id)}
-                              className="p-1.5 hover:bg-rose-50 text-rose-500 rounded transition-colors"
-                              title="Xóa"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            {gift.status !== "deleted" && (
+                              <a
+                                href={`/gift/${gift.id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1.5 hover:bg-stone-100 rounded text-stone-600 transition-colors"
+                                title="Xem chi tiết"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </a>
+                            )}
+                            {gift.status !== "deleted" ? (
+                              <button
+                                onClick={() => handleDelete(gift.id)}
+                                className="p-1.5 hover:bg-rose-50 text-rose-500 rounded transition-colors cursor-pointer border-0 bg-transparent"
+                                title="Xóa mềm"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleRestore(gift.id)}
+                                className="p-1.5 hover:bg-green-50 text-green-600 rounded transition-colors cursor-pointer border-0 bg-transparent"
+                                title="Khôi phục"
+                              >
+                                <RefreshCw className="w-4 h-4" />
+                              </button>
+                            )}
                           </div>
                         ) : (
                           <span className="text-xs text-stone-400 font-semibold italic">Chờ khách thiết kế</span>
@@ -399,76 +387,6 @@ export function GiftsPage() {
           </>
         )}
       </div>
-
-      {/* Edit Modal */}
-      <AnimatePresence>
-        {editingGift && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-2xl border border-stone-200 shadow-2xl p-6 w-full max-w-md relative"
-            >
-              <button
-                onClick={() => setEditingGift(null)}
-                className="absolute top-4 right-4 p-1 hover:bg-stone-100 rounded-lg text-stone-400 hover:text-stone-600 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-
-              <h3 className="text-base font-bold text-stone-900 mb-4">
-                Chỉnh sửa quà tặng (Mã: {editingGift.id})
-              </h3>
-
-              <form onSubmit={handleUpdate} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-1.5">
-                    Người Nhận
-                  </label>
-                  <input
-                    type="text"
-                    value={editRecipientName}
-                    onChange={(e) => setEditRecipientName(e.target.value)}
-                    required
-                    className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none focus:border-[#E8B4A8] bg-stone-50"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-1.5">
-                    Mã Đơn Hàng (orderId)
-                  </label>
-                  <input
-                    type="text"
-                    value={editOrderId}
-                    onChange={(e) => setEditOrderId(e.target.value)}
-                    required
-                    className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none focus:border-[#E8B4A8] bg-stone-50"
-                  />
-                </div>
-
-                <div className="flex gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setEditingGift(null)}
-                    className="flex-1 py-2 text-xs font-bold border border-stone-200 hover:bg-stone-50 text-stone-600 rounded-xl transition-colors cursor-pointer"
-                  >
-                    Hủy
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={updating}
-                    className="flex-1 py-2 text-xs font-bold bg-[#E8B4A8] hover:opacity-90 text-white rounded-xl transition-colors disabled:opacity-50 cursor-pointer shadow-md"
-                  >
-                    {updating ? "Đang lưu..." : "Lưu thay đổi"}
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
