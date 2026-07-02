@@ -1,0 +1,47 @@
+[
+  {
+    "id": "TPL-001",
+    "name": "Sinh Nhật Rực Rỡ",
+    "category": "celebration",
+    "categoryLabel": "Sinh nhật & Lễ hội",
+    "usageCount": 435,
+    "status": "active",
+    "preview": "https://images.unsplash.com/photo-1513151233558-d860c5398176?w=400"
+  },
+  {
+    "id": "TPL-002",
+    "name": "Kỷ Ức Lãng Mạn",
+    "category": "romance",
+    "categoryLabel": "Tình yêu & Lãng mạn",
+    "usageCount": 378,
+    "status": "active",
+    "preview": "https://images.unsplash.com/photo-1513279922550-250c2129b13a?w=400"
+  },
+  {
+    "id": "TPL-003",
+    "name": "Giáng Sinh Ấm Áp",
+    "category": "holiday",
+    "categoryLabel": "Ngày lễ & Giáng Sinh",
+    "usageCount": 289,
+    "status": "active",
+    "preview": "https://images.unsplash.com/photo-1482517967863-00e15c9b44be?w=400"
+  },
+  {
+    "id": "TPL-004",
+    "name": "Hành Trình Kỷ Niệm",
+    "category": "milestone",
+    "categoryLabel": "Kỷ niệm",
+    "usageCount": 245,
+    "status": "active",
+    "preview": "https://images.unsplash.com/photo-1523521803700-b3bcaeab0150?w=400"
+  },
+  {
+    "id": "TPL-005",
+    "name": "Ngày Tốt Nghiệp",
+    "category": "achievement",
+    "categoryLabel": "Thành tựu",
+    "usageCount": 187,
+    "status": "archived",
+    "preview": "https://images.unsplash.com/photo-1623461487986-9400110de28e?w=400"
+  }
+]
