@@ -14,6 +14,7 @@ const GiftSchema = new mongoose.Schema({
   music: { type: String, default: "none" },
   orderId: { type: String, required: true, index: true },
   views: { type: Number, default: 0 },
+  status: { type: String, default: "active" },
   createdAt: { type: String, default: () => new Date().toISOString() },
 });
 
