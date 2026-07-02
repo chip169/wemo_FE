@@ -15,6 +15,17 @@ const initStorage = () => {
     "nfc.json": "[]",
     "messages.json": "[]",
     "settings.json": "{}",
+    "templates.json": JSON.stringify([
+      {
+        id: "love-romantic",
+        name: "Mãi Yêu Thương (Trái Tim 3D)",
+        category: "romance",
+        categoryLabel: "Tình yêu & Lãng mạn",
+        usageCount: 378,
+        status: "active",
+        preview: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=400&q=80",
+      }
+    ], null, 2),
   };
 
   Object.entries(defaultFiles).forEach(([file, defaultContent]) => {
