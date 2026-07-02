@@ -15,6 +15,7 @@ const Order = require("./models/Order");
 const NFC = require("./models/NFC");
 const Message = require("./models/Message");
 const Admin = require("./models/Admin");
+const Template = require("./models/Template");
 
 const app = express();
 app.use(cors());
@@ -49,6 +50,22 @@ const saveGiftsList = async (list) => {
     // handled on a per-entity basis using mongoose
   } else {
     await writeJsonFile("gifts.json", list);
+  }
+};
+
+const getTemplates = async () => {
+  if (getDbMode() === "mongodb") {
+    return await Template.find({});
+  } else {
+    return await readJsonFile("templates.json");
+  }
+};
+
+const saveTemplatesList = async (list) => {
+  if (getDbMode() === "mongodb") {
+    // handled via mongoose
+  } else {
+    await writeJsonFile("templates.json", list);
   }
 };
 
@@ -265,7 +282,7 @@ app.get("/api/gifts/:id", async (req, res) => {
   try {
     if (getDbMode() === "mongodb") {
       const gift = await Gift.findOne({ id });
-      if (!gift) return res.status(404).json({ error: "Không tìm thấy quà tặng." });
+      if (!gift || gift.status === "deleted") return res.status(404).json({ error: "Không tìm thấy quà tặng." });
 
       // Increment views
       gift.views += 1;
@@ -276,6 +293,9 @@ app.get("/api/gifts/:id", async (req, res) => {
       const gifts = await getGifts();
       const giftIndex = gifts.findIndex((g) => g.id === id);
       if (giftIndex === -1) return res.status(404).json({ error: "Không tìm thấy quà tặng." });
+
+      const gift = gifts[giftIndex];
+      if (gift.status === "deleted") return res.status(404).json({ error: "Không tìm thấy quà tặng." });
 
       // Increment views
       gifts[giftIndex].views = (gifts[giftIndex].views || 0) + 1;
@@ -336,13 +356,20 @@ app.delete("/api/gifts/:id", authMiddleware, async (req, res) => {
   const { id } = req.params;
   try {
     if (getDbMode() === "mongodb") {
-      await Gift.deleteOne({ id });
+      const gift = await Gift.findOne({ id });
+      if (gift) {
+        gift.status = "deleted";
+        await gift.save();
+      }
     } else {
       const gifts = await getGifts();
-      const filtered = gifts.filter((g) => g.id !== id);
-      await saveGiftsList(filtered);
+      const giftIndex = gifts.findIndex((g) => g.id === id);
+      if (giftIndex !== -1) {
+        gifts[giftIndex].status = "deleted";
+        await saveGiftsList(gifts);
+      }
     }
-    res.json({ success: true, message: "Đã xóa quà tặng thành công." });
+    res.json({ success: true, message: "Đã xóa mềm quà tặng thành công." });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -350,7 +377,7 @@ app.delete("/api/gifts/:id", authMiddleware, async (req, res) => {
 
 app.put("/api/gifts/:id", authMiddleware, async (req, res) => {
   const { id } = req.params;
-  const { orderId, recipientName, templateId } = req.body;
+  const { orderId, recipientName, templateId, status } = req.body;
 
   try {
     if (getDbMode() === "mongodb") {
@@ -362,6 +389,7 @@ app.put("/api/gifts/:id", authMiddleware, async (req, res) => {
       if (orderId !== undefined) gift.orderId = orderId;
       if (recipientName !== undefined) gift.recipientName = recipientName;
       if (templateId !== undefined) gift.templateId = templateId;
+      if (status !== undefined) gift.status = status;
 
       await gift.save();
       res.json({ success: true, gift });
@@ -376,6 +404,7 @@ app.put("/api/gifts/:id", authMiddleware, async (req, res) => {
       if (orderId !== undefined) gift.orderId = orderId;
       if (recipientName !== undefined) gift.recipientName = recipientName;
       if (templateId !== undefined) gift.templateId = templateId;
+      if (status !== undefined) gift.status = status;
 
       gifts[giftIndex] = gift;
       await saveGiftsList(gifts);
@@ -578,17 +607,123 @@ app.get("/api/customers", authMiddleware, async (req, res) => {
   }
 });
 
-// 6. Templates list
-app.get("/api/templates", (req, res) => {
-  const templates = [
-    { id: "sinh-nhat", name: "Sinh Nhật Rực Rỡ", activeCount: 524 },
-    { id: "tinh-yeu", name: "Ký Ức Lãng Mạn", activeCount: 412 },
-    { id: "giang-sinh", name: "Giáng Sinh Diệu Kỳ", activeCount: 189 },
-    { id: "tot-nghiep", name: "Ngày Tốt Nghiệp", activeCount: 220 },
-    { id: "chao-don-be", name: "Chào Đón Em Bé", activeCount: 145 },
-    { id: "ky-niem", name: "Dòng Thời Gian Kỷ Niệm", activeCount: 387 },
-  ];
-  res.json(templates);
+// 6. Templates CRUD
+app.get("/api/templates", async (req, res) => {
+  try {
+    const list = await getTemplates();
+    const gifts = await getGifts();
+    
+    // Calculate real-time active gift usage count
+    const countMap = {};
+    gifts.forEach((g) => {
+      if (g.status !== "deleted") {
+        const tId = g.templateId || "";
+        countMap[tId] = (countMap[tId] || 0) + 1;
+      }
+    });
+
+    const updatedList = list.map((t) => {
+      const templateObj = t.toObject ? t.toObject() : t;
+      return {
+        ...templateObj,
+        usageCount: countMap[templateObj.id] || 0
+      };
+    });
+
+    res.json(updatedList);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/templates", authMiddleware, async (req, res) => {
+  const { id, name, category, categoryLabel, preview, status } = req.body;
+  if (!id || !name || !category || !categoryLabel || !preview) {
+    return res.status(400).json({ error: "Vui lòng nhập đầy đủ các trường thông tin mẫu thiết kế." });
+  }
+
+  try {
+    const newTemplate = {
+      id,
+      name,
+      category,
+      categoryLabel,
+      usageCount: 0,
+      status: status || "active",
+      preview
+    };
+
+    if (getDbMode() === "mongodb") {
+      const templateDoc = new Template(newTemplate);
+      await templateDoc.save();
+    } else {
+      const list = await getTemplates();
+      if (list.some((t) => t.id === id)) {
+        return res.status(400).json({ error: "Mẫu thiết kế này đã tồn tại." });
+      }
+      list.push(newTemplate);
+      await saveTemplatesList(list);
+    }
+    res.status(201).json(newTemplate);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put("/api/templates/:id", authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  const { name, category, categoryLabel, preview, status, usageCount } = req.body;
+
+  try {
+    if (getDbMode() === "mongodb") {
+      const template = await Template.findOne({ id });
+      if (!template) return res.status(404).json({ error: "Không tìm thấy mẫu thiết kế." });
+
+      if (name !== undefined) template.name = name;
+      if (category !== undefined) template.category = category;
+      if (categoryLabel !== undefined) template.categoryLabel = categoryLabel;
+      if (preview !== undefined) template.preview = preview;
+      if (status !== undefined) template.status = status;
+      if (usageCount !== undefined) template.usageCount = usageCount;
+
+      await template.save();
+      res.json({ success: true, template });
+    } else {
+      const list = await getTemplates();
+      const idx = list.findIndex((t) => t.id === id);
+      if (idx === -1) return res.status(404).json({ error: "Không tìm thấy mẫu thiết kế." });
+
+      const template = list[idx];
+      if (name !== undefined) template.name = name;
+      if (category !== undefined) template.category = category;
+      if (categoryLabel !== undefined) template.categoryLabel = categoryLabel;
+      if (preview !== undefined) template.preview = preview;
+      if (status !== undefined) template.status = status;
+      if (usageCount !== undefined) template.usageCount = usageCount;
+
+      list[idx] = template;
+      await saveTemplatesList(list);
+      res.json({ success: true, template });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete("/api/templates/:id", authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  try {
+    if (getDbMode() === "mongodb") {
+      await Template.deleteOne({ id });
+    } else {
+      const list = await getTemplates();
+      const filtered = list.filter((t) => t.id !== id);
+      await saveTemplatesList(filtered);
+    }
+    res.json({ success: true, message: "Đã xóa mẫu thiết kế thành công." });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // 7. Settings endpoint
